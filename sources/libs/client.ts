@@ -23,6 +23,7 @@ import * as $zlib from "zlib";
 import * as $qs from "querystring";
 import * as $Events from "events";
 import * as Error from "./Errors";
+import * as URL from "url";
 
 export interface IHttpClient {
 
@@ -200,7 +201,7 @@ implements IHttpClient {
         options: A.IClientRequestOptions<T>,
         method: string,
     ) {
-        let requestOptions: string | {
+        let requestOptions: {
             "host" ?: string,
             "method" ?: string,
             "path" ?: string,
@@ -213,7 +214,23 @@ implements IHttpClient {
 
         if (typeof options.url === "string") {
 
-            requestOptions = options.url;
+            let url = URL.parse(options.url);
+            requestOptions = {
+                "host": url.host,
+                "path": url.path,
+                "port": url.port ? parseInt(url.port) : undefined,
+                "headers": options.headers,
+                "method": method,
+            };
+
+            /**
+             * http ,return
+             */
+            if (options.url.startsWith("http:")) {
+
+                return requestOptions;
+            }
+
         }
         else {
 
@@ -225,20 +242,27 @@ implements IHttpClient {
                 "headers": options.headers
             };
 
-            if (typeof options.ssl === "object") {
+             /**
+              * http ,return
+              */
+            if (!options.url.secure) {
 
-                requestOptions.ca = options.ssl.ca ? options.ssl.ca : this.ca;
-                requestOptions.crl = options.ssl.crl ? options.ssl.crl : this.crl;
-                requestOptions.secureProtocol = options.ssl.secureProtocol
-                        ? options.ssl.secureProtocol : this.secureProtocol;
+                return requestOptions;
             }
-            else if (options.url.secure === true) {
+        }
 
-                requestOptions.ca = this.ca;
-                requestOptions.crl = this.crl;
-                requestOptions.secureProtocol = this.secureProtocol;
-            }
+        if (typeof options.ssl === "object") {
 
+            requestOptions.ca = options.ssl.ca ? options.ssl.ca : this.ca;
+            requestOptions.crl = options.ssl.crl ? options.ssl.crl : this.crl;
+            requestOptions.secureProtocol = options.ssl.secureProtocol
+                    ? options.ssl.secureProtocol : this.secureProtocol;
+        }
+        else {
+
+            requestOptions.ca = this.ca;
+            requestOptions.crl = this.crl;
+            requestOptions.secureProtocol = this.secureProtocol;
         }
 
         return requestOptions;
