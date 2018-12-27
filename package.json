@@ -1,0 +1,27 @@
+{
+  "name": "@reolink/http-client",
+  "version": "1.0.0",
+  "description": "http client package.",
+  "main": "index.js",
+  "dependencies": {
+    "@litert/async-fs": "^0.1.0",
+    "@litert/core": "^1.0.3",
+    "tslint": "^5.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.14",
+    "typescript": "^3.2.2"
+  },
+  "scripts": {
+    "prepare": "npm run rebuild",
+    "build": "echo Using TypeScript && tsc -v && tsc -p .",
+    "build-watch": "echo Using TypeScript && tsc -v && tsc -w -p .",
+    "rebuild": "npm run clean && npm run lint && npm run build",
+    "test": "echo See directory sources/samples",
+    "clean": "rm -rf tools",
+    "lint": "tslint -p . -c tslint.json"
+  },
+  "keywords": [],
+  "author": "xrb <happyxrb@gmail.com>",
+  "license": "Apache-2.0"
+}
