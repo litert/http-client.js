@@ -8,14 +8,14 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Start cloud test",
+            "name": "http client test",
             "program": "${workspaceRoot}/sources/samples/sample-01.ts",
             "cwd": "${workspaceFolder}",
 	        "args": [
             ],
             "outFiles": [
-                "${workspaceRoot}/dist/*.js",
-                "${workspaceRoot}/dist/**/*.js"
+                "${workspaceRoot}/*.js",
+                "${workspaceRoot}/**/*.js"
             ],
             "sourceMaps": true
         },

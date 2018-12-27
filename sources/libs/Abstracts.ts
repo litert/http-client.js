@@ -94,7 +94,7 @@ export type TURL = string | {
     "port"?: number;
 
     /**
-     * use http or https, default https
+     * use http or https, default http
      * if want to use http , set secure as false
      */
     "secure" ?: boolean | {

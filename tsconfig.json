@@ -21,7 +21,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "rootDir": "./sources/",
-    "outDir": "./dist/",
+    "outDir": "./",
     "noImplicitAny": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -62,8 +62,8 @@
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
   },
   "include": [
-    "./sources/libs/*.ts",
-    "./sources/samples/*.ts",
+    "./sources/*.ts",
+    "./sources/**/*.ts"
   ],
   "exclude": [
   ]

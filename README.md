@@ -12,7 +12,7 @@ A simple HTTP client based on LiteRT framework.
 
 ## Requirement
 
-- TypeScript v2.9.2 (or newer)
+- TypeScript v3.2.2 (or newer)
 - Node.js v10.0.0 (or newer)
 
 ## Installation
