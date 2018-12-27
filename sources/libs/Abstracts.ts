@@ -5,7 +5,7 @@
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,7 +45,7 @@ export type TMethod = "GET" | "POST" | "PUT" | "TRACE" |
 /**
  * support http version
  */
-export type TVersion = 1.1 | 2;
+export type TVersion = 1.1;
 
 /**
  *
@@ -89,7 +89,7 @@ export type TURL = string | {
 
     "host": string;
 
-    "path"?: string;
+    "path": string;
 
     "port"?: number;
 
@@ -97,17 +97,13 @@ export type TURL = string | {
      * use http or https, default http
      * if want to use http , set secure as false
      */
-    "secure" ?: boolean | {
-        secureProtocol ?: string;
-        ca?: string | string[] | Buffer | Buffer[];
-        crl?: string | string[] | Buffer | Buffer[];
-    };
+    "secure" ?: boolean;
 };
 
 /**
  * http body type
  */
-export type Tbody = string | Buffer | Readable | {
+export type TBody = string | Buffer | Readable | {
 
     "encoding": "urlencode" | "json";
 
@@ -137,7 +133,7 @@ export interface IClientRequestOptions<T extends boolean = false> {
     /**
      * http body
      */
-    "body"?: Tbody;
+    "body"?: TBody;
 
     /**
      * the return data is or is not a readable stream.
@@ -153,5 +149,11 @@ export interface IClientRequestOptions<T extends boolean = false> {
      * http request timeoout
      */
     "timeout" ?: number | IHttpRequstTimeout;
+
+    "ssl" ?: {
+        secureProtocol ?: string;
+        ca?: string | string[] | Buffer | Buffer[];
+        crl?: string | string[] | Buffer | Buffer[];
+    };
 
 }

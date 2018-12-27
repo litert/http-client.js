@@ -5,7 +5,7 @@
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -196,10 +196,9 @@ implements IHttpClient {
      * @param method
      * @param headers
      */
-    private _buildRequestOptions(
-        url: A.TURL,
+    private _buildRequestOptions<T extends boolean = false>(
+        options: A.IClientRequestOptions<T>,
         method: string,
-        headers ?: http.OutgoingHttpHeaders
     ) {
         let requestOptions: string | {
             "host" ?: string,
@@ -212,28 +211,28 @@ implements IHttpClient {
             "secureProtocol" ?: string;
         };
 
-        if (typeof url === "string") {
+        if (typeof options.url === "string") {
 
-            requestOptions = url;
+            requestOptions = options.url;
         }
         else {
 
             requestOptions = {
-                "host": url.host,
-                "path": url.path,
+                "host": options.url.host,
+                "path": options.url.path,
                 "method": method,
-                "port": url.port,
-                "headers": headers
+                "port": options.url.port,
+                "headers": options.headers
             };
 
-            if (typeof url.secure === "object") {
+            if (typeof options.ssl === "object") {
 
-                requestOptions.ca = url.secure.ca ? url.secure.ca : this.ca;
-                requestOptions.crl = url.secure.crl ? url.secure.crl : this.crl;
-                requestOptions.secureProtocol = url.secure.secureProtocol
-                        ? url.secure.secureProtocol : this.secureProtocol;
+                requestOptions.ca = options.ssl.ca ? options.ssl.ca : this.ca;
+                requestOptions.crl = options.ssl.crl ? options.ssl.crl : this.crl;
+                requestOptions.secureProtocol = options.ssl.secureProtocol
+                        ? options.ssl.secureProtocol : this.secureProtocol;
             }
-            else if (url.secure === true) {
+            else if (options.url.secure === true) {
 
                 requestOptions.ca = this.ca;
                 requestOptions.crl = this.crl;
@@ -251,9 +250,9 @@ implements IHttpClient {
      * @param headers
      * @param body
      */
-    private _restructBody(
+    private _prepareBody(
         headers: A.TOutgoingHeaders,
-        body?: A.Tbody
+        body?: A.TBody
     ) {
         if (!body) {
             return body;
@@ -299,7 +298,6 @@ implements IHttpClient {
         this.emit("pre_request", options);
 
         let ret = new RawPromise<A.THttpResponse<T>>();
-        let returnStream = options.returnStream === true ? true : false;
         let url = options.url;
         let responseBuffer: Buffer;
 
@@ -317,9 +315,9 @@ implements IHttpClient {
 
         let protocol = this._fetchProtocol(url);
 
-        let body = this._restructBody(options.headers, options.body);
+        let body = this._prepareBody(options.headers, options.body);
 
-        let requestOptions = this._buildRequestOptions(url, method, options.headers);
+        let requestOptions = this._buildRequestOptions(options, method);
 
         let request = protocol.request(
             requestOptions,
@@ -344,7 +342,7 @@ implements IHttpClient {
                     stream = response as any;
                 }
 
-                if (returnStream === true) {
+                if (options.returnStream) {
 
                     return ret.resolve({
                         "content": stream as any,
