@@ -216,7 +216,7 @@ implements IHttpClient {
 
             let url = URL.parse(options.url);
             requestOptions = {
-                "host": url.host,
+                "host": url.hostname,
                 "path": url.path,
                 "port": url.port ? parseInt(url.port) : undefined,
                 "headers": options.headers,
@@ -226,7 +226,7 @@ implements IHttpClient {
             /**
              * http ,return
              */
-            if (options.url.startsWith("http:")) {
+            if (url.protocol === "http:") {
 
                 return requestOptions;
             }
@@ -253,10 +253,9 @@ implements IHttpClient {
 
         if (typeof options.ssl === "object") {
 
-            requestOptions.ca = options.ssl.ca ? options.ssl.ca : this.ca;
-            requestOptions.crl = options.ssl.crl ? options.ssl.crl : this.crl;
-            requestOptions.secureProtocol = options.ssl.secureProtocol
-                    ? options.ssl.secureProtocol : this.secureProtocol;
+            requestOptions.ca = options.ssl.ca || this.ca;
+            requestOptions.crl = options.ssl.crl || this.crl;
+            requestOptions.secureProtocol = options.ssl.secureProtocol || this.secureProtocol;
         }
         else {
 
@@ -336,6 +335,8 @@ implements IHttpClient {
 
             headers[k.toLowerCase()] = options.headers[k];
         }
+
+        options.headers = headers;
 
         let protocol = this._fetchProtocol(url);
 
@@ -442,22 +443,26 @@ implements IHttpClient {
                     });
                 }
 
-                if (TIMEOUT_SEND) {
+                request.on("socket", function(this: typeof request): void {
 
-                    request.on("socket", function(this: typeof request): void {
+                    this.socket.on(
+                        "connect",
+                        function(this: typeof request.socket): void {
 
-                        this.socket.on(
-                            "connect",
-                            function(this: typeof request.socket): void {
+                            if (TIMEOUT_SEND) {
 
                                 this.setTimeout(TIMEOUT_SEND, () => {
 
-                                    ret.reject(new Error.E_SEND_TIMEOUT());
+                                    request.destroy(new Error.E_SEND_TIMEOUT());
                                 });
                             }
-                        );
-                    });
-                }
+                            else {
+
+                                this.setTimeout(0);
+                            }
+                        }
+                    );
+                });
 
                 if (TIMEOUT_HEAD) {
 
@@ -465,8 +470,15 @@ implements IHttpClient {
 
                         this.setTimeout(TIMEOUT_HEAD, () => {
 
-                            ret.reject(new Error.E_RESPONSE_TIMEOUT());
-                         });
+                            request.destroy(new Error.E_RESPONSE_TIMEOUT());
+                        });
+                    });
+                }
+                else {
+
+                    request.on("finish", function(this: typeof request): void {
+
+                        this.setTimeout(0);
                     });
                 }
 
@@ -476,8 +488,8 @@ implements IHttpClient {
 
                         this.setTimeout(TIMEOUT_RECV, () => {
 
-                            ret.reject(new Error.E_RECEIVE_TIMEOUT());
-                         });
+                            request.destroy(new Error.E_RECEIVE_TIMEOUT());
+                        });
                     });
                 }
             }

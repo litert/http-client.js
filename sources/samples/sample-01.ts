@@ -16,6 +16,7 @@
 
 import * as HTTPLib from "../libs";
 import * as fs from "fs";
+import * as http from "http";
 
 let httpClient = HTTPLib.createHttpClient();
 
@@ -106,6 +107,17 @@ export async function testPostStream() {
     }
 }
 
+export async function testLocalHost() {
+    let response = await httpClient.get({
+        "url": "http://mysql.rds.aliyuncs.com:80/"
+    });
+    // tslint:disable-next-line:no-console
+    console.log(response.content);
+}
+
 (async () => {
-    await testPostStream();
+    http.createServer(function(req, resp): void {
+        resp.end("hello");
+    }).listen(80);
+    await testLocalHost();
 })();

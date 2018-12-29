@@ -1,15 +1,15 @@
 {
   "name": "@litert/http-client",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "http client package.",
   "main": "libs/index.js",
   "dependencies": {
-    "@litert/core": "^1.0.3",
-    "tslint": "^5.12.0"
+    "@litert/core": "^1.0.3"
   },
   "devDependencies": {
     "@types/node": "^10.12.14",
-    "typescript": "^3.2.2"
+    "typescript": "^3.2.2",
+    "tslint": "^5.12.0"
   },
   "scripts": {
     "prepare": "npm run rebuild",
