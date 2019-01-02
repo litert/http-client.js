@@ -48,7 +48,7 @@ export type TMethod = "GET" | "POST" | "PUT" | "TRACE" |
 export type TVersion = 1.1;
 
 /**
- *
+ * outgoing headers
  */
 export type TOutgoingHeaders = Record<string, string | number>;
 

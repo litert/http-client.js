@@ -28,7 +28,10 @@
     "url": "https://github.com/litert/http-client.js/issues"
   },
   "homepage": "https://github.com/litert/http-client.js#readme",
-  "keywords": [],
+  "keywords": [
+    "http",
+    "client"
+  ],
   "author": "xrb <happyxrb@gmail.com>",
   "license": "Apache-2.0",
   "types": "libs/index.d.ts",
