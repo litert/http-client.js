@@ -22,7 +22,8 @@
         "only-arrow-functions": false,
         "no-unused-expression": false,
         "radix": false,
-        "no-var-requires": false
+        "no-var-requires": false,
+        "no-string-literal": false
     },
     "rulesDirectory": []
 }

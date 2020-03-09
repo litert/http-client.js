@@ -25,7 +25,7 @@ npm i @litert/http-client --save
 
 ### 简体中文版
 
-- 持续更新中
+- Preparing
 
 ## License
 

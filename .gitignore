@@ -1,3 +1,4 @@
 /node_modules/
-/libs/
-/samples/
+/lib/
+/examples/
+/test/

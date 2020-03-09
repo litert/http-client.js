@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "[LiteRT/http-client.js] Build (Prefer Local Compiler)",
+            "label": "[LiteRT/HTTPClient.js] Build (Prefer Local Compiler)",
             "type": "npm",
             "script": "build",
             "problemMatcher": [
@@ -13,7 +13,7 @@
             "isBackground": true
         },
         {
-            "label": "[LiteRT/http-client.js] Build (Watching, Prefer Local Compiler)",
+            "label": "[LiteRT/HTTPClient.js] Build (Watching, Prefer Local Compiler)",
             "type": "npm",
             "script": "build-watch",
             "problemMatcher": [

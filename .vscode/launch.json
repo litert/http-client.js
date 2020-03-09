@@ -4,21 +4,50 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
+
         {
             "type": "node",
             "request": "launch",
-            "name": "http client test",
-            "program": "${workspaceRoot}/sources/samples/sample-01.ts",
+            "name": "[LiteRT/HTTPClient.js] Example 01 - HTTP/1.1 Quick Start",
+            "program": "${workspaceRoot}/src/examples/001-http-1.1-quick-start.ts",
             "cwd": "${workspaceFolder}",
-	        "args": [
-            ],
             "outFiles": [
-                "${workspaceRoot}/*.js",
-                "${workspaceRoot}/**/*.js"
+                "${workspaceRoot}/examples/*.js",
+                "${workspaceRoot}/examples/**/*.js",
+                "${workspaceRoot}/lib/*.js",
+                "${workspaceRoot}/lib/**/*.js"
             ],
             "sourceMaps": true
         },
-       
+
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "[LiteRT/HTTPClient.js] Example 02 - HTTPS/1.1 Quick Start",
+            "program": "${workspaceRoot}/src/examples/002-https-1.1-quick-start.ts",
+            "cwd": "${workspaceFolder}",
+            "outFiles": [
+                "${workspaceRoot}/examples/*.js",
+                "${workspaceRoot}/examples/**/*.js",
+                "${workspaceRoot}/lib/*.js",
+                "${workspaceRoot}/lib/**/*.js"
+            ],
+            "sourceMaps": true
+        },
+
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "[LiteRT/HTTPClient.js] Example 03 - HTTPS/2.0 Quick Start",
+            "program": "${workspaceRoot}/src/examples/003-https-2-quick-start.ts",
+            "cwd": "${workspaceFolder}",
+            "outFiles": [
+                "${workspaceRoot}/examples/*.js",
+                "${workspaceRoot}/examples/**/*.js",
+                "${workspaceRoot}/lib/*.js",
+                "${workspaceRoot}/lib/**/*.js"
+            ],
+            "sourceMaps": true
+        }
     ]
 }

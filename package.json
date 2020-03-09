@@ -1,15 +1,18 @@
 {
   "name": "@litert/http-client",
-  "version": "0.1.1",
+  "version": "1.0.0-dev-20200309",
   "description": "http client package.",
-  "main": "libs/index.js",
+  "main": "lib/index.js",
   "dependencies": {
-    "@litert/core": "^1.0.3"
+    "@litert/core": "^1.0.6",
+    "@litert/observable": "^0.1.0"
   },
   "devDependencies": {
-    "@types/node": "^10.12.14",
-    "typescript": "^3.2.2",
-    "tslint": "^5.12.0"
+    "@types/node": "^12.0.0",
+    "@typescript-eslint/eslint-plugin": "^2.21.0",
+    "@typescript-eslint/parser": "^2.21.0",
+    "eslint": "^6.8.0",
+    "typescript": "^3.8.3"
   },
   "scripts": {
     "prepare": "npm run rebuild",
@@ -18,7 +21,7 @@
     "rebuild": "npm run clean && npm run lint && npm run build",
     "test": "echo See directory sources/samples",
     "clean": "rm -rf dist",
-    "lint": "tslint -p . -c tslint.json"
+    "lint": "eslint --ext ts src"
   },
   "repository": {
     "type": "git",
@@ -32,8 +35,8 @@
     "http",
     "client"
   ],
-  "author": "xrb <happyxrb@gmail.com>",
+  "authors": "LiteRT Org",
   "license": "Apache-2.0",
-  "types": "libs/index.d.ts",
-  "typings": "libs/index.d.ts"
+  "types": "lib/index.d.ts",
+  "typings": "lib/index.d.ts"
 }
