@@ -6,3 +6,5 @@
 /.npmignore
 /tslint.json
 /tsconfig.json
+/test/
+/*.sh
