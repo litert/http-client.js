@@ -20,7 +20,7 @@ import { Filters } from '@litert/observable';
 
 export type TPreprocessor = (opts: Req.IRequestOptions) => Req.IRequestOptions;
 
-export interface FilterPrerequest extends Filters.IFilterTemplate {
+export interface IFilterPrerequest extends Filters.IFilterTemplate {
 
     name: 'pre_request';
 

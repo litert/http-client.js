@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/* eslint-disable @typescript-eslint/no-magic-numbers */
 import * as $Http from '../lib';
 import * as $NativeHttps from 'http2';
 import * as $FS from 'fs';
@@ -74,107 +75,109 @@ const server = $NativeHttps.createSecureServer({
     }
 });
 
-server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, async function() {
+server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
+    (async (): Promise<void> => {
 
-    const hcli = $Http.createHttpClient();
+        const hcli = $Http.createHttpClient();
 
-    let req = await hcli.request({
-        url: {
-            protocol: 'https',
-            hostname: SERVER_HOST,
-            port: SERVER_PORT,
-            pathname: '/gzip',
-        },
-        method: 'POST',
-        version: 2,
-        ca: $FS.readFileSync('./test/ca/cert.pem'),
-        data: 'GZIP Result: hello world! angus'
-    });
+        let req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/gzip',
+            },
+            method: 'POST',
+            version: 2,
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            data: 'GZIP Result: hello world! angus'
+        });
 
-    try {
+        try {
 
-        console.log(`HTTP/2 ${req.statusCode}`);
-        console.log((await req.getBuffer()).toString());
-    }
-    catch (e) {
+            console.log(`HTTP/2 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
+        }
+        catch (e) {
 
-        console.error(e);
-    }
+            console.error(e);
+        }
 
-    req = await hcli.request({
-        url: {
-            protocol: 'https',
-            hostname: SERVER_HOST,
-            port: SERVER_PORT,
-            pathname: '/',
-        },
-        method: 'POST',
-        version: 2,
-        localAddress: '127.0.0.24',
-        ca: $FS.readFileSync('./test/ca/cert.pem'),
-        data: 'Plain Result: hello world! angus'
-    });
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'POST',
+            version: 2,
+            localAddress: '127.0.0.24',
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            data: 'Plain Result: hello world! angus'
+        });
 
-    try {
+        try {
 
-        console.log(`HTTP/2 ${req.statusCode}`);
-        console.log((await req.getBuffer()).toString());
+            console.log(`HTTP/2 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
 
-    }
-    catch (e) {
+        }
+        catch (e) {
 
-        console.error(e);
-    }
+            console.error(e);
+        }
 
-    req = await hcli.request({
-        url: {
-            protocol: 'https',
-            hostname: SERVER_HOST,
-            port: SERVER_PORT,
-            pathname: '/',
-        },
-        method: 'POST',
-        localAddress: '127.0.0.22',
-        ca: $FS.readFileSync('./test/ca/cert.pem'),
-        data: 'Auto-detected HTTP/2'
-    });
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'POST',
+            localAddress: '127.0.0.22',
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            data: 'Auto-detected HTTP/2'
+        });
 
-    try {
+        try {
 
-        console.log(`HTTP/2 ${req.statusCode}`);
-        console.log((await req.getBuffer()).toString());
+            console.log(`HTTP/2 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
 
-    }
-    catch (e) {
+        }
+        catch (e) {
 
-        console.error(e);
-    }
+            console.error(e);
+        }
 
-    req = await hcli.request({
-        url: {
-            protocol: 'https',
-            hostname: SERVER_HOST,
-            port: SERVER_PORT,
-            pathname: '/',
-        },
-        method: 'POST',
-        localAddress: '127.0.0.22',
-        ca: $FS.readFileSync('./test/ca/cert.pem'),
-        data: 'Auto-detected HTTP/2'
-    });
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'POST',
+            localAddress: '127.0.0.22',
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            data: 'Auto-detected HTTP/2'
+        });
 
-    try {
+        try {
 
-        console.log(`HTTP/2 ${req.statusCode}`);
-        console.log((await req.getBuffer()).toString());
+            console.log(`HTTP/2 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
 
-    }
-    catch (e) {
+        }
+        catch (e) {
 
-        console.error(e);
-    }
+            console.error(e);
+        }
 
-    hcli.close();
+        hcli.close();
 
-    server.close();
+        server.close();
+    })().catch((e) => console.error(e));
 });

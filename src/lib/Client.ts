@@ -35,9 +35,9 @@ class HttpClient implements C.IClient {
 
     public constructor(opts?: Partial<C.IClientOptions>) {
 
-        this.filters = opts?.filters || Filters.createFilterManager();
+        this.filters = opts?.filters ?? Filters.createFilterManager();
 
-        this._kvCache = opts?.kvCache || createSimpleKVSCache(60000);
+        this._kvCache = opts?.kvCache ?? createSimpleKVSCache(C.DEFAULT_PROTOCOL_DETECTION_CACHE_TTL);
 
         this._ = new HttpHelper();
 
@@ -78,10 +78,10 @@ class HttpClient implements C.IClient {
             optsIn.url = {
 
                 protocol: isHTTPS ? 'https' : 'http',
-                hostname: theURL.hostname || 'localhost',
-                pathname: theURL.pathname || '/',
+                hostname: theURL.hostname ?? 'localhost',
+                pathname: theURL.pathname ?? '/',
                 query: theURL.query || {},
-                port: theURL.port ? parseInt(theURL.port) : (isHTTPS ? 443 : 80)
+                port: theURL.port ? parseInt(theURL.port) : (isHTTPS ? C.DEFAULT_HTTPS_PORT : C.DEFAULT_HTTP_PORT)
             };
         }
 
@@ -100,13 +100,13 @@ class HttpClient implements C.IClient {
             'url': optsIn.url,
             'headers': _default(optsIn, 'headers', {}),
             'authentication': _default(optsIn, 'authentication', { type: 'none' }),
-            'minTLSVersion': _default(optsIn, 'minTLSVersion', 1),
+            'minTLSVersion': _default(optsIn, 'minTLSVersion', C.ETLSVersion.TLS_V1),
             'data': _default(optsIn, 'data', ''),
             'localAddress': _default(optsIn, 'localAddress', ''),
-            'timeout': _default(optsIn, 'timeout', 30000),
+            'timeout': _default(optsIn, 'timeout', C.DEFAULT_TIMEOUT),
             'keepAlive': _default(optsIn, 'keepAlive', true),
-            'keepAliveTimeout': _default(optsIn, 'keepAliveTimeout', 60000),
-            'version': _default(optsIn, 'version', (optsIn.url.protocol === 'http' ? 1.1 : 0)),
+            'keepAliveTimeout': _default(optsIn, 'keepAliveTimeout', C.DEFAULT_KEEP_ALIVE_TTL),
+            'version': _default(optsIn, 'version', (optsIn.url.protocol === 'http' ? C.EVersion.HTTP_1_1 : C.EVersion.AUTO)),
             'maxConnections': _default(optsIn, 'maxConnections', Infinity),
             'concurrency': _default(optsIn, 'concurrency', Infinity),
             'ca': _default(optsIn, 'ca', ''),
@@ -116,7 +116,7 @@ class HttpClient implements C.IClient {
             'connectionOptions': _default(optsIn, 'connectionOptions', {}),
         };
 
-        opts = await this.filters.filter<C.FilterPrerequest>('pre_request', opts);
+        opts = await this.filters.filter<C.IFilterPrerequest>('pre_request', opts);
 
         const headers: C.TRequestHeaders = {};
 
@@ -156,9 +156,9 @@ class HttpClient implements C.IClient {
         if (opts.url.protocol === 'https') {
 
             /**
-             * When version is set to `0`, detect the protocol supported by server automatically. 
+             * When version is set to `0`, detect the protocol supported by server automatically.
              */
-            if (opts.version === 0) {
+            if (opts.version === C.EVersion.AUTO) {
 
                 for (const k of ['h1s', 'h2s'] as const) {
 
@@ -175,25 +175,25 @@ class HttpClient implements C.IClient {
             else {
 
                 switch (opts.version) {
-                case 2:
-                    return this._wrapResponse(this._clients.h2s.request(opts));
-                case 1.1:
-                    return this._wrapResponse(this._clients.h1s.request(opts));
-                default:
-                    throw new E.E_PROTOCOL_NOT_SUPPORTED();
+                    case C.EVersion.HTTP_2:
+                        return this._wrapResponse(this._clients.h2s.request(opts));
+                    case C.EVersion.HTTP_1_1:
+                        return this._wrapResponse(this._clients.h1s.request(opts));
+                    default:
+                        throw new E.E_PROTOCOL_NOT_SUPPORTED();
                 }
             }
         }
         else {
 
             switch (opts.version) {
-            case 2:
-                return this._wrapResponse(this._clients.h2.request(opts));
-            case 0:
-            case 1.1:
-                return this._wrapResponse(this._clients.h1.request(opts));
-            default:
-                throw new E.E_PROTOCOL_NOT_SUPPORTED();
+                case C.EVersion.HTTP_2:
+                    return this._wrapResponse(this._clients.h2.request(opts));
+                case C.EVersion.AUTO:
+                case C.EVersion.HTTP_1_1:
+                    return this._wrapResponse(this._clients.h1.request(opts));
+                default:
+                    throw new E.E_PROTOCOL_NOT_SUPPORTED();
             }
         }
     }

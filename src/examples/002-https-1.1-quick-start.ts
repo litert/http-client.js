@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/* eslint-disable @typescript-eslint/no-magic-numbers */
 import * as $Http from '../lib';
 import * as $NativeHttps from 'https';
 import * as $FS from 'fs';
@@ -63,62 +64,64 @@ const server = $NativeHttps.createServer({
     }
 });
 
-server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, async function() {
+server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
+    (async (): Promise<void> => {
 
-    console.log(server.connections);
+        console.log(server.connections);
 
-    const hcli = $Http.createHttpClient();
+        const hcli = $Http.createHttpClient();
 
-    let req = await hcli.request({
-        url: {
-            protocol: 'https',
-            hostname: SERVER_HOST,
-            port: SERVER_PORT,
-            pathname: '/',
-        },
-        method: 'POST',
-        version: 1.1,
-        keepAlive: false,
-        ca: $FS.readFileSync('./test/ca/cert.pem'),
-        data: 'hello world! angus'
-    });
+        let req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'POST',
+            version: 1.1,
+            keepAlive: false,
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            data: 'hello world! angus'
+        });
 
-    try {
+        try {
 
-        console.log(`HTTP/1.1 ${req.statusCode}`);
-        console.log((await req.getBuffer()).toString());
+            console.log(`HTTP/1.1 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
 
-    }
-    catch (e) {
+        }
+        catch (e) {
 
-        console.error(e);
-    }
+            console.error(e);
+        }
 
-    req = await hcli.request({
-        url: {
-            protocol: 'https',
-            hostname: SERVER_HOST,
-            port: SERVER_PORT,
-            pathname: '/',
-        },
-        method: 'POST',
-        keepAlive: false,
-        ca: $FS.readFileSync('./test/ca/cert.pem'),
-        data: 'Plain Result: Auto-detected HTTP/1.1'
-    });
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'POST',
+            keepAlive: false,
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            data: 'Plain Result: Auto-detected HTTP/1.1'
+        });
 
-    try {
+        try {
 
-        console.log(`HTTP/1.1 ${req.statusCode}`);
-        console.log((await req.getBuffer()).toString());
+            console.log(`HTTP/1.1 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
 
-    }
-    catch (e) {
+        }
+        catch (e) {
 
-        console.error(e);
-    }
-    hcli.close();
-    server.close();
-    setTimeout(() => console.log(server.connections), 1000);
-    console.log('Done');
+            console.error(e);
+        }
+        hcli.close();
+        server.close();
+        setTimeout(() => console.log(server.connections), 1000);
+        console.log('Done');
+    })().catch((e) => console.error(e));
 });

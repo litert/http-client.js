@@ -37,7 +37,7 @@ export interface IResponse {
     /**
      * Get the whole data of response entity after gunzip/inflate if enabled
      *
-     * @param maxBytes  Limit the maximum bytes of data to be fetched into memory. 
+     * @param maxBytes  Limit the maximum bytes of data to be fetched into memory.
      */
     getBuffer(maxBytes?: number): Promise<Buffer>;
 

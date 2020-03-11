@@ -17,16 +17,31 @@
 /**
  * The request methods defined in HTTP/1.1 standard.
  */
-export type THttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' |
-                          'TRACE' | 'DELETE' | 'OPTIONS';
+export type THttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'TRACE' | 'DELETE' | 'OPTIONS';
+
+interface IWebDAVMethodMap {
+    'PATCH': void;
+    'COPY': void;
+    'LOCK': void;
+    'UNLOCK': void;
+    'MOVE': void;
+    'MKCOL': void;
+    'PROPFIND': void;
+    'PROPPATCH': void;
+    'REPORT': void;
+    'MKACTIVITY': void;
+    'CHECKOUT': void;
+    'MERGE': void;
+    'M-SEARCH': void;
+    'NOTIFY': void;
+    'SUBSCRIBE': void;
+    'UNSUBSCRIBE': void;
+}
 
 /**
  * The request methods defined in WebDAV standard.
  */
-export type TWebDAVMethod = 'PATCH' | 'COPY' | 'LOCK' | 'UNLOCK' | 'MOVE' |
-                            'MKCOL' | 'PROPFIND' | 'PROPPATCH' | 'REPORT' |
-                            'MKACTIVITY' | 'CHECKOUT' | 'MERGE' | 'M-SEARCH' |
-                            'NOTIFY' | 'SUBSCRIBE' | 'UNSUBSCRIBE';
+export type TWebDAVMethod = keyof IWebDAVMethodMap;
 
 /**
  * The type of available request methods.
@@ -49,4 +64,8 @@ export type CreateInputOptions<T, R extends keyof T, O extends keyof T> = {
 /**
  * The version of protocol for request.
  */
-export type TVersion = 1.1 | 2.0 | 0;
+export enum EVersion {
+    HTTP_1_1 = 1.1,
+    HTTP_2 = 2,
+    AUTO = 0
+}

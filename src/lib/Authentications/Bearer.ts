@@ -17,7 +17,7 @@
 import * as C from '../Common';
 import * as E from '../Errors';
 
-export function createBearerPreprocessor(): C.FilterPrerequest['callback'] {
+export function createBearerPreprocessor(): C.IFilterPrerequest['callback'] {
 
     return async (opts: C.IRequestOptions): Promise<C.IRequestOptions> => {
 

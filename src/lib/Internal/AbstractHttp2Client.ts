@@ -37,11 +37,13 @@ interface ISiteConnectionPool {
     connections: Record<string, IConnection>;
 }
 
+const INITIAL_CONN_ID_COUNTER = 0;
+
 export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
     private _connections: Record<string, ISiteConnectionPool>;
 
-    private _connIndex: number = 0;
+    private _connIndex: number = INITIAL_CONN_ID_COUNTER;
 
     public constructor(
         protected _: A.IHelper
@@ -78,19 +80,19 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
             const key = k.toLowerCase();
 
             switch (key) {
-            case $H2.constants.HTTP2_HEADER_CONTENT_LENGTH:
+                case $H2.constants.HTTP2_HEADER_CONTENT_LENGTH:
 
-                ret[C.Headers.CONTENT_LENGTH_H1] = headers[k];
-                break;
+                    ret[C.Headers.CONTENT_LENGTH_H1] = headers[k];
+                    break;
 
-            case $H2.constants.HTTP2_HEADER_METHOD:
-            case $H2.constants.HTTP2_HEADER_AUTHORITY:
+                case $H2.constants.HTTP2_HEADER_METHOD:
+                case $H2.constants.HTTP2_HEADER_AUTHORITY:
 
-                continue;
+                    continue;
 
-            default:
+                default:
 
-                ret[key] = headers[k];
+                    ret[key] = headers[k];
             }
         }
 
@@ -167,7 +169,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
         });
     }
 
-    private _releaseConnection(key: string, connId: string, conn: IConnection) {
+    private _releaseConnection(key: string, connId: string, conn: IConnection): void {
 
         conn.concurrency--;
 
@@ -266,5 +268,4 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
             throw e;
         }
     }
-
 }

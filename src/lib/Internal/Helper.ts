@@ -26,12 +26,12 @@ export class HttpHelper implements A.IHelper {
     public requireEntity(method: C.TMethod): boolean {
 
         switch (method) {
-        case 'GET':
-        case 'DELETE':
-        case 'HEAD':
-        case 'OPTIONS':
-        case 'TRACE':
-            return false;
+            case 'GET':
+            case 'DELETE':
+            case 'HEAD':
+            case 'OPTIONS':
+            case 'TRACE':
+                return false;
         }
 
         return true;

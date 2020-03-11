@@ -25,7 +25,7 @@ export interface IUrl {
 
     pathname: string;
 
-    query?: Record<string, string | number | (string | number)[]>;
+    query?: Record<string, string | number | Array<string | number>>;
 
     port?: number;
 }
@@ -53,6 +53,14 @@ export interface IBearerAuthentication extends IAuthentication {
 
 export type TRequestHeaders = Record<string, string | number>;
 
+export enum ETLSVersion {
+
+    TLS_V1 = 1,
+    TLS_V1_1 = 1.1,
+    TLS_V1_2 = 1.2,
+    TLS_V1_3 = 1.3
+}
+
 export interface IRequestOptions {
 
     method: B.TMethod;
@@ -78,7 +86,7 @@ export interface IRequestOptions {
      *
      * @default 1.1
      */
-    minTLSVersion: 1 | 1.1 | 1.2 | 1.3;
+    minTLSVersion: ETLSVersion;
 
     /**
      * The entity content to be sent to server-side.
@@ -94,7 +102,7 @@ export interface IRequestOptions {
      *
      * @default 2.0 for HTTPS and 1.1 for plain HTTP
      */
-    version: B.TVersion;
+    version: B.EVersion;
 
     /**
      * Enable accepting GZIP compressed data.
@@ -179,3 +187,13 @@ export type IRequestOptionsInput = B.CreateInputOptions<
     'method' | 'url',
     Exclude<keyof IRequestOptions, 'method' | 'url'>
 > & { url: string | IUrl; };
+
+export const DEFAULT_PROTOCOL_DETECTION_CACHE_TTL = 60000;
+
+export const DEFAULT_KEEP_ALIVE_TTL = 60000;
+
+export const DEFAULT_TIMEOUT = 30000;
+
+export const DEFAULT_HTTPS_PORT = 443;
+
+export const DEFAULT_HTTP_PORT = 80;

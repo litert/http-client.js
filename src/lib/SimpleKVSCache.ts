@@ -46,14 +46,14 @@ export function createSimpleKVSCache(ttl: number): C.IKeyValueCache {
 
             return null;
         },
-        set(key: string, value: any) {
+        set(key: string, value: unknown): void {
 
             data[key] = {
                 value,
                 expiringAt: Date.now() + ttl
             };
         },
-        remove(key): void {
+        remove(key: string): void {
 
             delete data[key];
         }

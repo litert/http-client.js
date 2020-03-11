@@ -19,6 +19,21 @@ import * as E from '../Errors';
 import { Readable } from 'stream';
 import * as $zlib from 'zlib';
 
+const HTTP_STATUS_CODE_SUCCESS_MIN = 200;
+const HTTP_STATUS_CODE_SUCCESS_MAX = 299;
+
+const HTTP_STATUS_CODE_REDIRECT_MIN = 300;
+const HTTP_STATUS_CODE_REDIRECT_MAX = 399;
+
+const HTTP_STATUS_CODE_CLIENT_ERROR_MIN = 400;
+const HTTP_STATUS_CODE_CLIENT_ERROR_MAX = 499;
+
+const HTTP_STATUS_CODE_SERVER_ERROR_MIN = 400;
+const HTTP_STATUS_CODE_SERVER_ERROR_MAX = 499;
+
+const HTTP_STATUS_CODE_CONTINUE = 100;
+const HTTP_STATUS_CODE_UPGRADE = 101;
+
 export class HttpClientResponse implements C.IResponse {
 
     public constructor(
@@ -71,7 +86,7 @@ export class HttpClientResponse implements C.IResponse {
                 stream = resp.pipe($zlib.createInflate());
             }
 
-            stream.on('data', (maxLength > 0 && maxLength !== Infinity) ? (function() {
+            stream.on('data', (maxLength && maxLength !== Infinity) ? (function() {
 
                 let length = 0;
 
@@ -98,7 +113,7 @@ export class HttpClientResponse implements C.IResponse {
                     data.push(chunk);
                 };
 
-            })() : function(chunk): void {
+            })() : function(chunk: Buffer): void {
 
                 data.push(chunk);
 
@@ -138,36 +153,36 @@ export class HttpClientResponse implements C.IResponse {
 
     public isSuccess(): boolean {
 
-        return this._statusCode as number >= 200 &&
-               this._statusCode as number <= 299;
+        return this._statusCode >= HTTP_STATUS_CODE_SUCCESS_MIN &&
+               this._statusCode <= HTTP_STATUS_CODE_SUCCESS_MAX;
     }
 
     public isRedirection(): boolean {
 
-        return this._statusCode as number >= 300 &&
-               this._statusCode as number <= 399;
+        return this._statusCode >= HTTP_STATUS_CODE_REDIRECT_MIN &&
+               this._statusCode <= HTTP_STATUS_CODE_REDIRECT_MAX;
     }
 
     public isClientError(): boolean {
 
-        return this._statusCode as number >= 400 &&
-               this._statusCode as number <= 499;
+        return this._statusCode >= HTTP_STATUS_CODE_CLIENT_ERROR_MIN &&
+               this._statusCode <= HTTP_STATUS_CODE_CLIENT_ERROR_MAX;
     }
 
     public isServerError(): boolean {
 
-        return this._statusCode as number >= 500 &&
-               this._statusCode as number <= 599;
+        return this._statusCode >= HTTP_STATUS_CODE_SERVER_ERROR_MIN &&
+               this._statusCode <= HTTP_STATUS_CODE_SERVER_ERROR_MAX;
     }
 
     public isContinue(): boolean {
 
-        return this._statusCode === 100;
+        return this._statusCode === HTTP_STATUS_CODE_CONTINUE;
     }
 
     public isUpgrade(): boolean {
 
-        return this._statusCode === 101;
+        return this._statusCode === HTTP_STATUS_CODE_UPGRADE;
     }
 
 }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/* eslint-disable @typescript-eslint/no-magic-numbers */
 import * as $Http from '../lib';
 import * as $NativeHttp from 'http';
 
@@ -58,31 +59,35 @@ const server = $NativeHttp.createServer(function(req, resp) {
     }
 });
 
-server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, async function() {
+server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
 
-    const req = await hcli.request({
-        url: {
-            protocol: 'http',
-            hostname: SERVER_ADDR,
-            port: SERVER_PORT,
-            pathname: '/'
-        },
-        method: 'POST',
-        data: 'hello world! angus'
-    });
+    (async (): Promise<void> => {
 
-    try {
+        const req = await hcli.request({
+            url: {
+                protocol: 'http',
+                hostname: SERVER_ADDR,
+                port: SERVER_PORT,
+                pathname: '/'
+            },
+            method: 'POST',
+            data: 'hello world! angus'
+        });
 
-        console.log(`HTTP/1.1 ${req.statusCode}`);
-        console.log((await req.getBuffer()).toString());
+        try {
 
-    }
-    catch (e) {
+            console.log(`HTTP/1.1 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
 
-        console.error(e);
-    }
+        }
+        catch (e) {
 
-    hcli.close();
+            console.error(e);
+        }
 
-    server.close();
+        hcli.close();
+
+        server.close();
+
+    })().catch((e) => console.error(e));
 });

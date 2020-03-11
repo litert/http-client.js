@@ -50,5 +50,4 @@ export class H2Client extends AbstractHttp2Client implements A.IProtocolClient {
 
         return `${this._.getAuthroity(opts.url)}/la:${opts.localAddress}`;
     }
-
 }
