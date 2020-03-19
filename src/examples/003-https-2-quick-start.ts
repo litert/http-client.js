@@ -88,7 +88,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
                 pathname: '/gzip',
             },
             method: 'POST',
-            version: 2,
+            version: $Http.EVersion.HTTP_2,
             ca: $FS.readFileSync('./test/ca/cert.pem'),
             data: 'GZIP Result: hello world! angus'
         });
@@ -111,7 +111,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
                 pathname: '/',
             },
             method: 'POST',
-            version: 2,
+            version: $Http.EVersion.HTTP_2,
             localAddress: '127.0.0.24',
             ca: $FS.readFileSync('./test/ca/cert.pem'),
             data: 'Plain Result: hello world! angus'
@@ -163,6 +163,44 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             localAddress: '127.0.0.22',
             ca: $FS.readFileSync('./test/ca/cert.pem'),
             data: 'Auto-detected HTTP/2'
+        });
+
+        try {
+
+            console.log(`HTTP/2 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
+
+        }
+        catch (e) {
+
+            console.error(e);
+        }
+
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'GET',
+            localAddress: '127.0.0.22',
+            ca: $FS.readFileSync('./test/ca/cert.pem')
+        });
+
+        console.log(`HTTP/2 ${req.statusCode}`);
+        req.abort();
+
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'GET',
+            localAddress: '127.0.0.22',
+            ca: $FS.readFileSync('./test/ca/cert.pem')
         });
 
         try {

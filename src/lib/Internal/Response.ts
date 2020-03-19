@@ -34,17 +34,35 @@ const HTTP_STATUS_CODE_SERVER_ERROR_MAX = 499;
 const HTTP_STATUS_CODE_CONTINUE = 100;
 const HTTP_STATUS_CODE_UPGRADE = 101;
 
+const EMPTY_BUFFER = Buffer.allocUnsafe(0);
+
 export class HttpClientResponse implements C.IResponse {
 
     public constructor(
+        private _protocol: C.EProtocol,
         private _stream: Readable,
         private _contentLength: number,
         private _headers: C.TResponseHeaders,
         private _statusCode: number,
         private _gzip?: boolean,
-        private _deflate?: boolean
+        private _deflate?: boolean,
+        private _noEntity?: boolean
     ) {
 
+    }
+
+    public abort(): void {
+
+        let s = this._stream as any;
+
+        if (s.close) {
+
+            s.close();
+        }
+        else {
+
+            s.destroy();
+        }
     }
 
     public get headers(): C.TResponseHeaders {
@@ -62,12 +80,17 @@ export class HttpClientResponse implements C.IResponse {
         return this._contentLength;
     }
 
-    public close(): void {
+    public get protocol(): C.EProtocol {
 
-        this._stream.destroy();
+        return this._protocol;
     }
 
     public getBuffer(maxLength: number = Infinity): Promise<Buffer> {
+
+        if (maxLength <= 0 || this.contentLength <= 0 || this._noEntity) {
+
+            return Promise.resolve(EMPTY_BUFFER);
+        }
 
         return new Promise<Buffer>((resolve, reject) => {
 
@@ -132,6 +155,11 @@ export class HttpClientResponse implements C.IResponse {
 
     public getStream(): Readable {
 
+        if (this._noEntity || this._statusCode === 204) {
+
+            throw new E.E_NO_RESPONSE_ENTITY();
+        }
+
         const resp = this._stream;
 
         if (this._gzip && this._headers['content-encoding'] === 'gzip') {
@@ -147,6 +175,11 @@ export class HttpClientResponse implements C.IResponse {
     }
 
     public getRawStream(): Readable {
+
+        if (this._noEntity || this._statusCode === 204) {
+
+            throw new E.E_NO_RESPONSE_ENTITY();
+        }
 
         return this._stream;
     }

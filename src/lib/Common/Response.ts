@@ -17,7 +17,20 @@
 import { Readable } from 'stream';
 import * as B from './Basic';
 
+export enum EProtocol {
+
+    HTTP_1,
+    HTTPS_1,
+    HTTP_2,
+    HTTPS_2
+}
+
 export interface IResponse {
+
+    /**
+     * The protocol used in this request.
+     */
+    'protocol': EProtocol;
 
     /**
      * The headers of response.
@@ -35,6 +48,13 @@ export interface IResponse {
     'contentLength': number;
 
     /**
+     * Abort the request transporting.
+     *
+     * If this is a HTTP/1.1 request, the connection will be destroyed and not reusable.
+     */
+    abort(): void;
+
+    /**
      * Get the whole data of response entity after gunzip/inflate if enabled
      *
      * @param maxBytes  Limit the maximum bytes of data to be fetched into memory.
@@ -45,11 +65,6 @@ export interface IResponse {
      * Get the raw stream of response entity from server-side.
      */
     getRawStream(): Readable;
-
-    /**
-     * Close the response.
-     */
-    close(): void;
 
     /**
      * Get the data stream of response entity after gunzip/inflate if enabled.

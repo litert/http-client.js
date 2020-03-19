@@ -48,6 +48,21 @@
                 "${workspaceRoot}/lib/**/*.js"
             ],
             "sourceMaps": true
+        },
+
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "[LiteRT/HTTPClient.js] Example 04 - HTTP/2.0 Quick Start",
+            "program": "${workspaceRoot}/src/examples/004-http-2-quick-start.ts",
+            "cwd": "${workspaceFolder}",
+            "outFiles": [
+                "${workspaceRoot}/examples/*.js",
+                "${workspaceRoot}/examples/**/*.js",
+                "${workspaceRoot}/lib/*.js",
+                "${workspaceRoot}/lib/**/*.js"
+            ],
+            "sourceMaps": true
         }
     ]
 }

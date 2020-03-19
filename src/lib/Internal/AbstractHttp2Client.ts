@@ -236,6 +236,10 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
                 delete opts.data;
             }
+            else {
+
+                req.end();
+            }
 
             if (opts.timeout) {
 
@@ -247,13 +251,15 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
                 req.on('response', (respHeaders) => {
 
                     resolve({
+                        'protocol': opts.connectionOptions.createConnection ? C.EProtocol.HTTPS_2 : C.EProtocol.HTTP_2,
                         'gzip': opts.gzip,
                         'deflate': opts.deflate,
                         'stream': req,
                         'headers': respHeaders as any,
                         'statusCode': parseInt(respHeaders[$H2.constants.HTTP2_HEADER_STATUS] as string),
                         'contentLength': respHeaders[$H2.constants.HTTP2_HEADER_CONTENT_LENGTH] === undefined ?
-                            Infinity : parseInt(respHeaders[$H2.constants.HTTP2_HEADER_CONTENT_LENGTH] as string)
+                            Infinity : parseInt(respHeaders[$H2.constants.HTTP2_HEADER_CONTENT_LENGTH] as string),
+                        'noEntity': !this._.hasEntity(opts.method),
                     });
 
                 })

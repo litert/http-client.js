@@ -52,3 +52,10 @@ export const E_TOO_LARGE_RESPONSE_ENTITY = ErrorHub.define(
     'The entity of response is too large.',
     {}
 );
+
+export const E_NO_RESPONSE_ENTITY = ErrorHub.define(
+    null,
+    'E_NO_RESPONSE_ENTITY',
+    'The response entity is empty.',
+    {}
+);

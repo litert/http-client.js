@@ -271,12 +271,14 @@ class HttpClient implements C.IClient {
         const result = await pResult;
 
         return new I.HttpClientResponse(
+            result.protocol,
             result.stream,
             result.contentLength,
             result.headers,
             result.statusCode,
             result.gzip,
-            result.deflate
+            result.deflate,
+            result.noEntity
         );
     }
 }

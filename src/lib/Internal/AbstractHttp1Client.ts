@@ -48,19 +48,25 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
 
             delete opts.data;
         }
+        else {
+
+            theReq.end();
+        }
 
         return new Promise((resolve, reject) => {
 
             theReq.on('response', (resp: $H1.IncomingMessage) => {
 
                 resolve({
+                    'protocol': opts.connectionOptions.createConnection ? C.EProtocol.HTTPS_1 : C.EProtocol.HTTP_1,
                     'gzip': opts.gzip,
                     'deflate': opts.deflate,
                     'stream': resp,
                     'headers': resp.headers as any,
                     'statusCode': resp.statusCode as number,
                     'contentLength': resp.headers[C.Headers.CONTENT_LENGTH_H1] === undefined ?
-                        Infinity : parseInt(resp.headers[C.Headers.CONTENT_LENGTH_H1] as string)
+                        Infinity : parseInt(resp.headers[C.Headers.CONTENT_LENGTH_H1] as string),
+                    'noEntity': !this._.hasEntity(opts.method),
                 });
 
             }).once('error', (e) => {

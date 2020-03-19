@@ -67,8 +67,6 @@ const server = $NativeHttps.createServer({
 server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
     (async (): Promise<void> => {
 
-        console.log(server.connections);
-
         const hcli = $Http.createHttpClient();
 
         let req = await hcli.request({
@@ -79,7 +77,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
                 pathname: '/',
             },
             method: 'POST',
-            version: 1.1,
+            version: $Http.EVersion.HTTP_1_1,
             keepAlive: false,
             ca: $FS.readFileSync('./test/ca/cert.pem'),
             data: 'hello world! angus'
@@ -119,9 +117,33 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
 
             console.error(e);
         }
+
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'GET',
+            keepAlive: false,
+            ca: $FS.readFileSync('./test/ca/cert.pem')
+        });
+
+        try {
+
+            console.log(`HTTP/1.1 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
+        }
+        catch (e) {
+
+            console.error(e);
+        }
+
         hcli.close();
         server.close();
-        setTimeout(() => console.log(server.connections), 1000);
+
         console.log('Done');
+
     })().catch((e) => console.error(e));
 });

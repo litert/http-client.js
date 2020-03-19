@@ -16,41 +16,28 @@
 
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import * as $Http from '../lib';
-import * as $NativeHttp from 'http';
-import * as $ZLib from 'zlib';
-
-const hcli = $Http.createHttpClient();
+import * as $NativeHttp2 from 'http2';
+import * as $zlib from 'zlib';
 
 const SERVER_ADDR = '127.0.0.1';
+const SERVER_HOST = 'b.local.org';
 const SERVER_PORT = 8089;
 const SERVER_BACKLOG = 512;
 
-const server = $NativeHttp.createServer(function(req, resp) {
+const server = $NativeHttp2.createServer(function(req, resp) {
 
     if (req.method === 'GET') {
 
-        resp.setHeader($Http.Headers.CONTENT_TYPE, 'text/plain');
-        resp.setHeader($Http.Headers.CONTENT_ENCODING, 'gzip');
-
-        const gzip = $ZLib.createGzip();
-
-        resp.writeHead(200);
-        gzip.pipe(resp);
-
-        gzip.write('hello ');
-        gzip.end('world!');
-    }
-    else if (req.method === 'HEAD') {
-
-        resp.writeHead(200);
-        resp.end();
+        resp.setHeader('content-type', 'text/plain');
+        resp.setHeader('content-length', 12);
+        resp.end('hello world!');
     }
     else if (req.method === 'POST') {
 
-        if (!req.headers[$Http.Headers.CONTENT_LENGTH_H1]) {
+        if (!req.headers['content-length']) {
 
             resp.writeHead(400);
-            resp.setHeader($Http.Headers.CONTENT_LENGTH_H1, 0);
+            resp.setHeader('content-length', 0);
             resp.end();
             return;
         }
@@ -60,42 +47,72 @@ const server = $NativeHttp.createServer(function(req, resp) {
             resp.setHeader('content-type', req.headers['content-type']);
         }
 
-        if (req.headers[$Http.Headers.CONTENT_LENGTH_H1]) {
+        if (req.headers[$NativeHttp2.constants.HTTP2_HEADER_PATH] === '/gzip') {
 
-            resp.setHeader(
-                $Http.Headers.CONTENT_LENGTH_H1,
-                req.headers[$Http.Headers.CONTENT_LENGTH_H1] as string
-            );
+            resp.setHeader('content-encoding', 'gzip');
+
+            resp.writeHead(200);
+
+            req.pipe($zlib.createGzip()).pipe(resp.stream);
         }
+        else {
 
-        req.pipe(resp);
+            resp.writeHead(200);
+
+            req.pipe(resp.stream);
+        }
     }
     else {
 
-        resp.setHeader($Http.Headers.CONTENT_LENGTH_H1, 0);
+        resp.setHeader('content-length', 0);
         resp.writeHead(405);
         resp.end();
     }
 });
 
 server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
-
     (async (): Promise<void> => {
+
+        const hcli = $Http.createHttpClient();
 
         let req = await hcli.request({
             url: {
                 protocol: 'http',
-                hostname: SERVER_ADDR,
+                hostname: SERVER_HOST,
                 port: SERVER_PORT,
-                pathname: '/'
+                pathname: '/gzip',
             },
             method: 'POST',
-            data: 'hello world! angus'
+            version: $Http.EVersion.HTTP_2,
+            data: 'GZIP Result: hello world! angus'
         });
 
         try {
 
-            console.log(`HTTP/1.1 ${req.statusCode}`);
+            console.log(`HTTP/2 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
+        }
+        catch (e) {
+
+            console.error(e);
+        }
+
+        req = await hcli.request({
+            url: {
+                protocol: 'http',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'POST',
+            version: $Http.EVersion.HTTP_2,
+            localAddress: '127.0.0.24',
+            data: 'Plain Result: hello world! angus'
+        });
+
+        try {
+
+            console.log(`HTTP/2 ${req.statusCode}`);
             console.log((await req.getBuffer()).toString());
 
         }
@@ -107,52 +124,19 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
         req = await hcli.request({
             url: {
                 protocol: 'http',
-                hostname: SERVER_ADDR,
+                hostname: SERVER_HOST,
                 port: SERVER_PORT,
-                pathname: '/'
+                pathname: '/',
             },
-            method: 'GET'
-        });
-
-        console.log(`HTTP/1.1 ${req.statusCode}`);
-
-        req.abort();
-
-        req = await hcli.request({
-            url: {
-                protocol: 'http',
-                hostname: SERVER_ADDR,
-                port: SERVER_PORT,
-                pathname: '/'
-            },
-            method: 'GET'
+            method: 'GET',
+            version: $Http.EVersion.HTTP_2,
+            localAddress: '127.0.0.22',
         });
 
         try {
 
-            console.log(`HTTP/1.1 ${req.statusCode}`);
+            console.log(`HTTP/2 ${req.statusCode}`);
             console.log((await req.getBuffer()).toString());
-
-        }
-        catch (e) {
-
-            console.error(e);
-        }
-
-        req = await hcli.request({
-            url: {
-                protocol: 'http',
-                hostname: SERVER_ADDR,
-                port: SERVER_PORT,
-                pathname: '/'
-            },
-            method: 'HEAD'
-        });
-
-        try {
-
-            console.log(`HTTP/1.1 ${req.statusCode}`);
-            console.log('Response is', (await req.getBuffer()).toString().length === 0 ? 'empty' : 'non-empty');
 
         }
         catch (e) {
@@ -163,9 +147,5 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
         hcli.close();
 
         server.close();
-
-    })().catch((e) => {
-
-        console.error(e);
-    });
+    })().catch((e) => console.error(e));
 });

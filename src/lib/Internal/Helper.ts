@@ -27,9 +27,22 @@ export class HttpHelper implements A.IHelper {
 
         switch (method) {
             case 'GET':
-            case 'DELETE':
             case 'HEAD':
             case 'OPTIONS':
+            case 'TRACE':
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if the HTTP METHOD will responses a entity.
+     */
+    public hasEntity(method: C.TMethod): boolean {
+
+        switch (method) {
+            case 'HEAD':
             case 'TRACE':
                 return false;
         }

@@ -1,6 +1,6 @@
 {
   "name": "@litert/http-client",
-  "version": "1.0.0-dev-20200309",
+  "version": "1.0.0-dev-20200319",
   "description": "http client package.",
   "main": "lib/index.js",
   "dependencies": {

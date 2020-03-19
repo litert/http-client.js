@@ -20,6 +20,8 @@ import { Readable } from 'stream';
 
 export interface IRequestResult {
 
+    protocol: C.EProtocol;
+
     headers: C.TResponseHeaders;
 
     contentLength: number;
@@ -37,6 +39,11 @@ export interface IRequestResult {
      * Tell if deflate encoding is acceptable.
      */
     deflate: boolean;
+
+    /**
+     * Tell if the response has a entity.
+     */
+    noEntity: boolean;
 }
 
 export interface IProtocolClient {
@@ -55,6 +62,8 @@ export interface IProtocolClient {
 export interface IHelper {
 
     requireEntity(method: C.TMethod): boolean;
+
+    hasEntity(method: C.TMethod): boolean;
 
     buildPath(url: C.IUrl): string;
 

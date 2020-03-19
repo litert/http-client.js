@@ -116,7 +116,7 @@
         "@typescript-eslint/unbound-method": ["error"],
         "@typescript-eslint/type-annotation-spacing": ["error"],
         "@typescript-eslint/no-unnecessary-condition": ["off"],
-        "@typescript-eslint/no-magic-numbers": ["warn", {
+        "@typescript-eslint/no-magic-numbers": ["off", {
             "ignoreEnums": true
         }],
         "@typescript-eslint/no-unnecessary-boolean-literal-compare": ["warn"],
