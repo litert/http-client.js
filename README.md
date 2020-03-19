@@ -1,6 +1,7 @@
 # LiteRT/HTTP Client
 
 [![npm version](https://img.shields.io/npm/v/@litert/http-client.svg?colorB=brightgreen)](https://www.npmjs.com/package/@litert/http-client "Stable Version")
+[![npm version](https://img.shields.io/npm/v/@litert/http-client/dev.svg)](https://www.npmjs.com/package/@litert/http-client "Development Version")
 [![License](https://img.shields.io/npm/l/@litert/http-client.svg?maxAge=2592000?style=plastic)](https://github.com/litert/http-client/blob/master/LICENSE)
 [![node](https://img.shields.io/node/v/@litert/http-client.svg?colorB=brightgreen)](https://nodejs.org/dist/latest-v8.x/)
 [![GitHub issues](https://img.shields.io/github/issues/litert/http-client.js.svg)](https://github.com/litert/http-client.js/issues)
