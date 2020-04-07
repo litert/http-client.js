@@ -182,11 +182,14 @@ export interface IRequestTimeout {
     receiving: number;
 }
 
-export type IRequestOptionsInput = B.CreateInputOptions<
+export interface IRequestOptionsInput extends B.CreateInputOptions<
     IRequestOptions,
-    'method' | 'url',
+    'method',
     Exclude<keyof IRequestOptions, 'method' | 'url'>
-> & { url: string | IUrl; };
+> {
+
+    url: string | IUrl;
+}
 
 export const DEFAULT_PROTOCOL_DETECTION_CACHE_TTL = 60000;
 

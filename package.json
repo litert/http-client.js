@@ -1,24 +1,36 @@
 {
   "name": "@litert/http-client",
-  "version": "1.0.0-dev-20200319",
-  "description": "http client package.",
+  "version": "1.0.0-dev-20200407",
+  "description": "A simple HTTP client based on LiteRT.",
   "main": "lib/index.js",
   "dependencies": {
     "@litert/core": "^1.0.6",
     "@litert/observable": "^0.1.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-conventional": "^8.3.4",
     "@types/node": "^12.0.0",
     "@typescript-eslint/eslint-plugin": "^2.21.0",
     "@typescript-eslint/parser": "^2.21.0",
     "eslint": "^6.8.0",
+    "husky": "^4.2.3",
     "typescript": "^3.8.3"
   },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "npm run lint && npm run typecheck"
+    }
+  },
   "scripts": {
-    "prepare": "npm run rebuild",
+    "prepare": "npm run rebuild-production",
     "build": "echo Using TypeScript && tsc -v && tsc -p .",
+    "build-production": "echo Using TypeScript && tsc -v && tsc -p tsconfig.production.json",
+    "typecheck": "echo Using TypeScript && tsc -v && tsc -p . --noEmit",
     "build-watch": "echo Using TypeScript && tsc -v && tsc -w -p .",
-    "rebuild": "npm run clean && npm run lint && npm run build",
+    "rebuild": "npm run clean && npm run lint && npm run build-production",
+    "rebuild-production": "npm run clean && npm run lint && npm run build",
     "test": "echo See directory sources/samples",
     "clean": "rm -rf lib examples",
     "lint": "eslint --ext ts src"

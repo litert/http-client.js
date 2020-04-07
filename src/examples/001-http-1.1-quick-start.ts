@@ -140,12 +140,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
         }
 
         req = await hcli.request({
-            url: {
-                protocol: 'http',
-                hostname: SERVER_ADDR,
-                port: SERVER_PORT,
-                pathname: '/'
-            },
+            url: `http://${SERVER_ADDR}:${SERVER_PORT}/`,
             method: 'HEAD'
         });
 

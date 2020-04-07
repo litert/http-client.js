@@ -7,7 +7,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/litert/http-client.js.svg)](https://github.com/litert/http-client.js/issues)
 [![GitHub Releases](https://img.shields.io/github/release/litert/http-client.js.svg)](https://github.com/litert/http-client.js/releases "Stable Release")
 
-A simple HTTP client based on LiteRT framework.
+A simple HTTP client based on LiteRT.
 
 ## Requirement
 
