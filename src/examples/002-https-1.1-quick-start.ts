@@ -80,7 +80,10 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             version: $Http.EVersion.HTTP_1_1,
             keepAlive: false,
             ca: $FS.readFileSync('./test/ca/cert.pem'),
-            data: 'hello world! angus'
+            data: 'hello world! angus',
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
         });
 
         try {
@@ -104,7 +107,10 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             method: 'POST',
             keepAlive: false,
             ca: $FS.readFileSync('./test/ca/cert.pem'),
-            data: 'Plain Result: Auto-detected HTTP/1.1'
+            data: 'Plain Result: Auto-detected HTTP/1.1',
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
         });
 
         try {
@@ -127,7 +133,10 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             },
             method: 'GET',
             keepAlive: false,
-            ca: $FS.readFileSync('./test/ca/cert.pem')
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
         });
 
         try {

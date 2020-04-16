@@ -201,7 +201,7 @@ class HttpClient implements C.IClient {
     protected async _autoDetectProtocol(opts: C.IRequestOptions): Promise<C.IResponse> {
 
         const tlsOpts: $TLS.ConnectionOptions = {
-            host: opts.url.hostname,
+            host: opts.connectionOptions.remoteHost ?? opts.url.hostname,
             port: opts.url.port,
             servername: opts.url.hostname,
             minVersion: `TLSv${opts.minTLSVersion}` as any,
@@ -216,6 +216,11 @@ class HttpClient implements C.IClient {
         if (opts.ca) {
 
             tlsOpts.ca = opts.ca;
+        }
+
+        if (opts.connectionOptions.remoteHost) {
+
+            tlsOpts.servername = opts.url.hostname;
         }
 
         return new Promise((resolve, reject) => {

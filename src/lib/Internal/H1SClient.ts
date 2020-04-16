@@ -78,8 +78,16 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
 
         const REQ_ENTITY = this._.requireEntity(opts.method);
 
+        if (opts.connectionOptions.remoteHost) {
+
+            if (!opts.headers['host']) {
+                opts.headers['host'] = opts.url.hostname;
+            }
+            opts.connectionOptions.severname = opts.url.hostname;
+        }
+
         const h1sOpts: $H1S.RequestOptions = {
-            'host': opts.url.hostname,
+            'host': opts.connectionOptions.remoteHost ?? opts.url.hostname,
             'port': opts.url.port,
             'method': opts.method,
             'path': this._.buildPath(opts.url),
@@ -157,6 +165,6 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
             return hasher.digest('base64');
         }
 
-        return `${this._.getAuthroity(opts.url)}/tls_v${opts.minTLSVersion}/la:${opts.localAddress}/conns:${opts.maxConnections}`;
+        return `${this._.getAuthroity(opts.url)}/rh:${opts.connectionOptions.remoteHost ?? opts.url.hostname}/tls_v${opts.minTLSVersion}/la:${opts.localAddress}/conns:${opts.maxConnections}`;
     }
 }

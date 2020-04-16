@@ -195,6 +195,23 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
         key: string = this.getAuthorityKey(opts)
     ): Promise<A.IRequestResult> {
 
+        const headers: $H1.OutgoingHttpHeaders = {
+            ...this._preprocessHeaders(opts.headers),
+            [$H2.constants.HTTP2_HEADER_METHOD]: opts.method,
+            [$H2.constants.HTTP2_HEADER_PATH]: this._.buildPath(opts.url)
+        };
+
+        if (opts.connectionOptions.remoteHost) {
+
+            if (!headers[$H2.constants.HTTP2_HEADER_AUTHORITY]) {
+
+                headers[$H2.constants.HTTP2_HEADER_AUTHORITY] = opts.url.hostname;
+            }
+
+            opts.connectionOptions.servername = opts.url.hostname;
+            opts.url.hostname = opts.connectionOptions.remoteHost;
+        }
+
         let [connId, conn] = await this._getConnection(
             opts,
             this._prepareOptions(opts),
@@ -202,12 +219,6 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
         );
 
         try {
-
-            const headers: $H1.OutgoingHttpHeaders = {
-                ...this._preprocessHeaders(opts.headers),
-                [$H2.constants.HTTP2_HEADER_METHOD]: opts.method,
-                [$H2.constants.HTTP2_HEADER_PATH]: this._.buildPath(opts.url)
-            };
 
             const REQ_ENTITY = this._.requireEntity(opts.method);
 

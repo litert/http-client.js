@@ -55,6 +55,8 @@ const server = $NativeHttp.createServer(function(req, resp) {
             return;
         }
 
+        console.log(`[Server] Host: ${req.headers['host']}`);
+
         if (req.headers['content-type']) {
 
             resp.setHeader('content-type', req.headers['content-type']);
@@ -148,6 +150,26 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
 
             console.log(`HTTP/1.1 ${req.statusCode}`);
             console.log('Response is', (await req.getBuffer()).toString().length === 0 ? 'empty' : 'non-empty');
+
+        }
+        catch (e) {
+
+            console.error(e);
+        }
+
+        req = await hcli.request({
+            url: `http://a.local.org:${SERVER_PORT}/`,
+            method: 'POST',
+            data: 'This is a test for "a.local.org".',
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
+        });
+
+        try {
+
+            console.log(`HTTP/1.1 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
 
         }
         catch (e) {

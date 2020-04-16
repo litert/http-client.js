@@ -161,7 +161,17 @@ export interface IRequestOptions {
     /**
      * The extra options for connections.
      */
-    connectionOptions: Record<string, any>;
+    connectionOptions: {
+
+        [k: string]: any;
+
+        /**
+         * Specify the remote IP/hostname to connect.
+         *
+         * The hostname/IP in URL will be used as `servername` for TLS authentication and HTTP `Host` header.
+         */
+        'remoteHost'?: string;
+    };
 
     /**
      * How long, in milliseconds, will timeout while no any action on the connection.

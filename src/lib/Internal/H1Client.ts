@@ -80,8 +80,15 @@ export class H1Client extends AbstractHttp1Client implements A.IProtocolClient {
             this._preprocessEntity(opts);
         }
 
+        if (opts.connectionOptions.remoteHost) {
+
+            if (!opts.headers['host']) {
+                opts.headers['host'] = opts.url.hostname;
+            }
+        }
+
         let h1Opts: $H1.RequestOptions = {
-            host: opts.url.hostname,
+            host: opts.connectionOptions.remoteHost ?? opts.url.hostname,
             port: opts.url.port,
             method: opts.method,
             path: this._.buildPath(opts.url),
@@ -112,6 +119,6 @@ export class H1Client extends AbstractHttp1Client implements A.IProtocolClient {
 
     public getAuthorityKey(opts: C.IRequestOptions): string {
 
-        return `${this._.getAuthroity(opts.url)}/la:${opts.localAddress}/conns:${opts.maxConnections}`;
+        return `${this._.getAuthroity(opts.url)}/rh:${opts.connectionOptions.remoteHost ?? opts.url.hostname}/la:${opts.localAddress}/conns:${opts.maxConnections}`;
     }
 }

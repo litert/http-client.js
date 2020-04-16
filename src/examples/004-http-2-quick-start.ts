@@ -84,7 +84,10 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             },
             method: 'POST',
             version: $Http.EVersion.HTTP_2,
-            data: 'GZIP Result: hello world! angus'
+            data: 'GZIP Result: hello world! angus',
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
         });
 
         try {
@@ -107,7 +110,10 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             method: 'POST',
             version: $Http.EVersion.HTTP_2,
             localAddress: '127.0.0.24',
-            data: 'Plain Result: hello world! angus'
+            data: 'Plain Result: hello world! angus',
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
         });
 
         try {
@@ -131,6 +137,9 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             method: 'GET',
             version: $Http.EVersion.HTTP_2,
             localAddress: '127.0.0.22',
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
         });
 
         try {
