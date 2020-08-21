@@ -19,29 +19,15 @@
  */
 export type THttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'TRACE' | 'DELETE' | 'OPTIONS';
 
-interface IWebDAVMethodMap {
-    'PATCH': void;
-    'COPY': void;
-    'LOCK': void;
-    'UNLOCK': void;
-    'MOVE': void;
-    'MKCOL': void;
-    'PROPFIND': void;
-    'PROPPATCH': void;
-    'REPORT': void;
-    'MKACTIVITY': void;
-    'CHECKOUT': void;
-    'MERGE': void;
-    'M-SEARCH': void;
-    'NOTIFY': void;
-    'SUBSCRIBE': void;
-    'UNSUBSCRIBE': void;
-}
-
+/* eslint-disable @typescript-eslint/indent */
 /**
  * The request methods defined in WebDAV standard.
  */
-export type TWebDAVMethod = keyof IWebDAVMethodMap;
+export type TWebDAVMethod = 'PATCH' | 'COPY' | 'LOCK' | 'UNLOCK' |
+                            'MOVE' | 'MKCOL' | 'PROPFIND' | 'PROPPATCH' |
+                            'REPORT' | 'MKACTIVITY' | 'CHECKOUT' | 'MERGE' |
+                            'M-SEARCH' | 'NOTIFY' | 'SUBSCRIBE' | 'UNSUBSCRIBE';
+/* eslint-enable @typescript-eslint/indent */
 
 /**
  * The type of available request methods.
@@ -53,12 +39,12 @@ export type TMethod = THttpMethod | TWebDAVMethod;
  */
 export type TResponseHeaders = Record<string, string | number | Array<string | number>>;
 
-export type CreateInputOptions<T, R extends keyof T, O extends keyof T> = {
+export type CreateInputOptions<T, TRequired extends keyof T, TOptional extends keyof T> = {
 
-    [P in R]-?: T[P];
+    [P in TRequired]-?: T[P];
 } & {
 
-    [P in O]?: T[P];
+    [P in TOptional]?: T[P];
 };
 
 /**

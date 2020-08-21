@@ -11,11 +11,11 @@
             "name": "[LiteRT/HTTPClient.js] Example 01 - HTTP/1.1 Quick Start",
             "program": "${workspaceRoot}/src/examples/001-http-1.1-quick-start.ts",
             "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
             "outFiles": [
-                "${workspaceRoot}/examples/*.js",
-                "${workspaceRoot}/examples/**/*.js",
-                "${workspaceRoot}/lib/*.js",
-                "${workspaceRoot}/lib/**/*.js"
+                "${workspaceRoot}/**/*.js"
             ],
             "sourceMaps": true
         },
@@ -26,11 +26,11 @@
             "name": "[LiteRT/HTTPClient.js] Example 02 - HTTPS/1.1 Quick Start",
             "program": "${workspaceRoot}/src/examples/002-https-1.1-quick-start.ts",
             "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
             "outFiles": [
-                "${workspaceRoot}/examples/*.js",
-                "${workspaceRoot}/examples/**/*.js",
-                "${workspaceRoot}/lib/*.js",
-                "${workspaceRoot}/lib/**/*.js"
+                "${workspaceRoot}/**/*.js"
             ],
             "sourceMaps": true
         },
@@ -41,11 +41,11 @@
             "name": "[LiteRT/HTTPClient.js] Example 03 - HTTPS/2.0 Quick Start",
             "program": "${workspaceRoot}/src/examples/003-https-2-quick-start.ts",
             "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
             "outFiles": [
-                "${workspaceRoot}/examples/*.js",
-                "${workspaceRoot}/examples/**/*.js",
-                "${workspaceRoot}/lib/*.js",
-                "${workspaceRoot}/lib/**/*.js"
+                "${workspaceRoot}/**/*.js"
             ],
             "sourceMaps": true
         },
@@ -56,11 +56,41 @@
             "name": "[LiteRT/HTTPClient.js] Example 04 - HTTP/2.0 Quick Start",
             "program": "${workspaceRoot}/src/examples/004-http-2-quick-start.ts",
             "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
             "outFiles": [
-                "${workspaceRoot}/examples/*.js",
-                "${workspaceRoot}/examples/**/*.js",
-                "${workspaceRoot}/lib/*.js",
-                "${workspaceRoot}/lib/**/*.js"
+                "${workspaceRoot}/**/*.js"
+            ],
+            "sourceMaps": true
+        },
+
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "[LiteRT/HTTPClient.js] Example 05 - Debug",
+            "program": "${workspaceRoot}/src/examples/005-debug.ts",
+            "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "outFiles": [
+                "${workspaceRoot}/**/*.js"
+            ],
+            "sourceMaps": true
+        },
+
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "[LiteRT/HTTPClient.js] Example 06 - Debug Native",
+            "program": "${workspaceRoot}/src/examples/006-debug-2.ts",
+            "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "outFiles": [
+                "${workspaceRoot}/**/*.js"
             ],
             "sourceMaps": true
         }

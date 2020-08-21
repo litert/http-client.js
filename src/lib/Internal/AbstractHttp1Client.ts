@@ -32,10 +32,10 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
     protected _processRequest(
         theReq: $H1.ClientRequest,
         opts: C.IRequestOptions,
-        REQ_ENTITY: boolean
+        hasReqEntity: boolean
     ): Promise<A.IRequestResult> {
 
-        if (REQ_ENTITY) {
+        if (hasReqEntity) {
 
             if (opts.data instanceof Readable) {
 
@@ -71,6 +71,9 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
 
             }).once('error', (e) => {
 
+                theReq.removeAllListeners('error');
+                theReq.removeAllListeners('response');
+                theReq.removeAllListeners('close');
                 reject(e);
             });
         });

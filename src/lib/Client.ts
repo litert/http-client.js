@@ -80,11 +80,12 @@ class HttpClient implements C.IClient {
                 protocol: isHTTPS ? 'https' : 'http',
                 hostname: theURL.hostname ?? 'localhost',
                 pathname: theURL.pathname ?? '/',
-                query: theURL.query || {},
+                query: theURL.query as any ?? {},
                 port: theURL.port ? parseInt(theURL.port) : (isHTTPS ? C.DEFAULT_HTTPS_PORT : C.DEFAULT_HTTP_PORT)
             };
         }
 
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         function _default<T, K extends keyof T>(
             obj: Partial<T>,
             key: K,
@@ -151,7 +152,7 @@ class HttpClient implements C.IClient {
         return this._request(opts);
     }
 
-    public _request(opts: C.IRequestOptions): Promise<C.IResponse> {
+    private _request(opts: C.IRequestOptions): Promise<C.IResponse> {
 
         if (opts.url.protocol === 'https') {
 
@@ -162,7 +163,7 @@ class HttpClient implements C.IClient {
 
                 for (const k of ['h1s', 'h2s'] as const) {
 
-                    let key: string = this._clients[k].getAuthorityKey(opts);
+                    const key = this._clients[k].getAuthorityKey(opts);
 
                     if (this._kvCache.get(key) === k) {
 
@@ -205,6 +206,7 @@ class HttpClient implements C.IClient {
             port: opts.url.port,
             servername: opts.url.hostname,
             minVersion: `TLSv${opts.minTLSVersion}` as any,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             ALPNProtocols: ['h2', 'http/1.1']
         };
 
@@ -225,7 +227,7 @@ class HttpClient implements C.IClient {
 
         return new Promise((resolve, reject) => {
 
-            let conn = $TLS.connect({
+            const conn = $TLS.connect({
                 ...tlsOpts,
                 ...opts.connectionOptions
             }, () => {
@@ -237,6 +239,13 @@ class HttpClient implements C.IClient {
                     const key: string = this._clients.h2s.getAuthorityKey(opts);
 
                     this._kvCache.set(key, 'h2s');
+
+                    /**
+                     * The bug in NodeJS v12.x and v13.x, the library does not reset the `secureConnecting`.
+                     *
+                     * @see https://github.com/nodejs/node/issues/33343#issuecomment-677940309
+                     */
+                    (conn as any).secureConnecting = false;
 
                     resolve(this._wrapResponse(this._clients.h2s.request(
                         opts,

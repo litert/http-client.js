@@ -16,6 +16,7 @@
 
 import * as L from '@litert/core';
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ErrorHub = L.createErrorHub('@litert/http-client');
 
 export const E_EMPTY_AUTH_CREDENTIALS = ErrorHub.define(

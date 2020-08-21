@@ -73,7 +73,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
      */
     protected _preprocessHeaders(headers: C.TRequestHeaders): C.TRequestHeaders {
 
-        let ret: C.TRequestHeaders = {};
+        const ret: C.TRequestHeaders = {};
 
         for (const k in headers) {
 
@@ -99,7 +99,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
         return ret;
     }
 
-    protected abstract getAuthorityKey(opts: C.IRequestOptions): string;
+    public abstract getAuthorityKey(opts: C.IRequestOptions): string;
 
     protected async _getConnection(
         opts: C.IRequestOptions,
@@ -113,7 +113,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
             if (pool.quantity) {
 
-                for (let k in pool.connections) {
+                for (const k in pool.connections) {
 
                     const conn = pool.connections[k];
 
@@ -137,7 +137,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
         return new Promise((resolve, reject) => {
 
-            let session = $H2.connect(this._.getAuthroity(opts.url), h2Opts);
+            const session = $H2.connect(this._.getAuthroity(opts.url), h2Opts);
 
             session.once('connect', () => {
 
@@ -212,7 +212,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
             opts.url.hostname = opts.connectionOptions.remoteHost;
         }
 
-        let [connId, conn] = await this._getConnection(
+        const [connId, conn] = await this._getConnection(
             opts,
             this._prepareOptions(opts),
             key
@@ -274,7 +274,13 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
                     });
 
                 })
-                    .once('error', reject)
+                    .once('error', (e) => {
+
+                        req.removeAllListeners('error');
+                        req.removeAllListeners('response');
+                        req.removeAllListeners('close');
+                        reject(e);
+                    })
                     .on('close', () => this._releaseConnection(key, connId, conn));
             });
         }
