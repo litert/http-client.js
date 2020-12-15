@@ -20,6 +20,7 @@ module.exports = {
             'docs',
             'lint',
             'branch',
+            'deps',
             'global'
         ]],
         'scope-empty': [2, 'never'],

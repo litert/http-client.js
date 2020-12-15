@@ -2,11 +2,12 @@
 
 ## Protocols
 
-- [x] HTTP/2.0
-- [x] HTTPS/2.0
+- [x] HTTP/2
+- [x] HTTPS/2
 - [x] HTTP/1.1
 - [x] HTTPS/1.1
-- [x] HTTPS/auto
+- [x] HTTPS/auto (Partially supported, for only HTTP/1.1 and HTTP/2 )
+- [ ] HTTPS/3
 
 ## Features
 
@@ -20,4 +21,4 @@
 - [x] Request Timeout
 - [x] Connection Management
 - [x] Concurrency Management
-- [ ] Custom Servername
+- [x] Custom Servername

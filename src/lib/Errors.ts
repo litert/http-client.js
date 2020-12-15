@@ -14,49 +14,55 @@
  * limitations under the License.
  */
 
-import * as L from '@litert/core';
+import * as $Exceptions from '@litert/exception';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const ErrorHub = L.createErrorHub('@litert/http-client');
+export const errorRegistry = $Exceptions.createExceptionRegistry({
+    'module': 'http-client.litert.org',
+    'types': {
+        'public': {
+            'index': $Exceptions.createIncreaseCodeIndex(1)
+        }
+    }
+});
 
-export const E_EMPTY_AUTH_CREDENTIALS = ErrorHub.define(
-    null,
-    'E_EMPTY_AUTH_CREDENTIALS',
-    'The authentication credential is empty.',
-    {}
-);
+export const E_EMPTY_AUTH_CREDENTIALS = errorRegistry.register({
+    name: 'empty_auth_credentials',
+    message: 'The authentication credential is empty.',
+    metadata: {},
+    type: 'public'
+});
 
-export const E_UNKNOWN_AUTH_TYPE = ErrorHub.define(
-    null,
-    'E_UNKNOWN_AUTH_TYPE',
-    'The type of authentication is not recognizable.',
-    {}
-);
+export const E_UNKNOWN_AUTH_TYPE = errorRegistry.register({
+    name: 'unknown_auth_type',
+    message: 'The type of authentication is not recognizable.',
+    metadata: {},
+    type: 'public'
+});
 
-export const E_NO_CONTENT_LENGTH = ErrorHub.define(
-    null,
-    'E_NO_CONTENT_LENGTH',
-    'The header content-length is not specific.',
-    {}
-);
+export const E_NO_CONTENT_LENGTH = errorRegistry.register({
+    name: 'no_content_length',
+    message: 'The header content-length is not specific.',
+    metadata: {},
+    type: 'public'
+});
 
-export const E_PROTOCOL_NOT_SUPPORTED = ErrorHub.define(
-    null,
-    'E_PROTOCOL_NOT_SUPPORTED',
-    'The protocol is not supported.',
-    {}
-);
+export const E_PROTOCOL_NOT_SUPPORTED = errorRegistry.register({
+    name: 'protocol_not_supported',
+    message: 'The protocol is not supported.',
+    metadata: {},
+    type: 'public'
+});
 
-export const E_TOO_LARGE_RESPONSE_ENTITY = ErrorHub.define(
-    null,
-    'E_TOO_LARGE_RESPONSE_ENTITY',
-    'The entity of response is too large.',
-    {}
-);
+export const E_TOO_LARGE_RESPONSE_ENTITY = errorRegistry.register({
+    name: 'too_large_response_entity',
+    message: 'The entity of response is too large.',
+    metadata: {},
+    type: 'public'
+});
 
-export const E_NO_RESPONSE_ENTITY = ErrorHub.define(
-    null,
-    'E_NO_RESPONSE_ENTITY',
-    'The response entity is empty.',
-    {}
-);
+export const E_NO_RESPONSE_ENTITY = errorRegistry.register({
+    name: 'no_response_entity',
+    message: 'The response entity is empty.',
+    metadata: {},
+    type: 'public'
+});
