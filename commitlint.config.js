@@ -5,13 +5,7 @@ module.exports = {
         'type-enum': [2, 'always', [
             'feat',
             'fix',
-            'add',
-            'test',
-            'refactor',
-            'perf',
-            'style',
-            'config',
-            'merge'
+            'build',
         ]],
         'scope-enum': [2, 'always', [
             'client',
@@ -21,7 +15,7 @@ module.exports = {
             'lint',
             'branch',
             'deps',
-            'global'
+            'project'
         ]],
         'scope-empty': [2, 'never'],
         'subject-min-length': [2, 'always', 5],
