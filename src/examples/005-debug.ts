@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Angus.Fenying <fenying@litert.org>
+ * Copyright 2021 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,99 +16,25 @@
 
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import * as $Http from '../lib';
-import * as $NativeHttps from 'http2';
-import * as $FS from 'fs';
-import * as $zlib from 'zlib';
+(async (): Promise<void> => {
 
-const SERVER_ADDR = '127.0.0.1';
-const SERVER_HOST = 'b.local.org';
-const SERVER_PORT = 8089;
-const SERVER_BACKLOG = 512;
+    const hcli = $Http.createHttpClient();
 
-const server = $NativeHttps.createSecureServer({
-    ca: $FS.readFileSync('./test/ca/cert.pem'),
-    cert: $FS.readFileSync('./test/certs/b.local.org/cert.pem'),
-    key: $FS.readFileSync('./test/certs/b.local.org/key.pem'),
-}, function(req, resp) {
+    const req = await hcli.request({
+        url: 'https://www.google.com',
+        method: 'GET'
+    });
 
-    if (req.method === 'GET') {
+    try {
 
-        resp.setHeader('content-type', 'text/plain');
-        resp.setHeader('content-length', 12);
-        resp.end('hello world!');
+        console.log(`HTTP/2 ${req.statusCode}`);
+        console.log((await req.getBuffer()).toString());
     }
-    else if (req.method === 'POST') {
+    catch (e) {
 
-        if (!req.headers['content-length']) {
-
-            resp.writeHead(400);
-            resp.setHeader('content-length', 0);
-            resp.end();
-            return;
-        }
-
-        if (req.headers['content-type']) {
-
-            resp.setHeader('content-type', req.headers['content-type']);
-        }
-
-        if (req.headers[$NativeHttps.constants.HTTP2_HEADER_PATH] === '/gzip') {
-
-            resp.setHeader('content-encoding', 'gzip');
-
-            resp.writeHead(200);
-
-            req.pipe($zlib.createGzip()).pipe(resp.stream);
-        }
-        else {
-
-            resp.writeHead(200);
-
-            req.pipe(resp.stream);
-        }
+        console.error(e);
     }
-    else {
 
-        resp.setHeader('content-length', 0);
-        resp.writeHead(405);
-        resp.end();
-    }
-});
+    hcli.close();
 
-server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
-    (async (): Promise<void> => {
-
-        const hcli = $Http.createHttpClient();
-
-        const req = await hcli.request({
-            url: {
-                protocol: 'https',
-                hostname: SERVER_HOST,
-                port: SERVER_PORT,
-                pathname: '/',
-            },
-            method: 'POST',
-            localAddress: '127.0.0.22',
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
-            data: 'Auto-detected HTTP/2',
-            connectionOptions: {
-                remoteHost: SERVER_ADDR
-            }
-        });
-
-        try {
-
-            console.log(`HTTP/2 ${req.statusCode}`);
-            console.log((await req.getBuffer()).toString());
-
-        }
-        catch (e) {
-
-            console.error(e);
-        }
-
-        hcli.close();
-
-        server.close();
-    })().catch((e) => console.error(e));
-});
+})().catch((e) => console.error(e));
