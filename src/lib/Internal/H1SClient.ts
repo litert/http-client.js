@@ -80,10 +80,11 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
 
         if (opts.connectionOptions.remoteHost) {
 
-            if (!opts.headers['host']) {
-                opts.headers['host'] = opts.url.hostname;
-            }
             opts.connectionOptions.severname = opts.url.hostname;
+        }
+
+        if (!opts.headers['host']) {
+            opts.headers['host'] = opts.url.hostname;
         }
 
         const h1sOpts: $H1S.RequestOptions = {
