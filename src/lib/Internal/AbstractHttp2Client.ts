@@ -203,13 +203,13 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
         if (opts.connectionOptions.remoteHost) {
 
-            if (!headers[$H2.constants.HTTP2_HEADER_AUTHORITY]) {
-
-                headers[$H2.constants.HTTP2_HEADER_AUTHORITY] = opts.url.hostname;
-            }
-
             opts.connectionOptions.servername = opts.url.hostname;
             opts.url.hostname = opts.connectionOptions.remoteHost;
+        }
+
+        if (!headers[$H2.constants.HTTP2_HEADER_AUTHORITY]) {
+
+            headers[$H2.constants.HTTP2_HEADER_AUTHORITY] = opts.url.hostname;
         }
 
         const [connId, conn] = await this._getConnection(
