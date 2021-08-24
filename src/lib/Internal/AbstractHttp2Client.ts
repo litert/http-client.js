@@ -177,13 +177,16 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
             const pool = this._connections[key];
 
-            delete pool.connections[connId];
+            if (pool) {
 
-            pool.quantity--;
+                delete pool.connections[connId];
 
-            if (!pool.quantity) {
+                pool.quantity--;
 
-                delete this._connections[key];
+                if (!pool.quantity) {
+
+                    delete this._connections[key];
+                }
             }
         }
     }
