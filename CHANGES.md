@@ -1,5 +1,9 @@
 # Changes Logs
 
+## v1.0.3
+
+- fix(client): Apply timeout for response stream.
+
 ## v1.0.2
 
 - fix(client): skip releasing closed connection pools.

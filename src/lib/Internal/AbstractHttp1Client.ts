@@ -57,6 +57,11 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
 
             theReq.on('response', (resp: $H1.IncomingMessage) => {
 
+                if (opts.timeout) {
+
+                    resp.setTimeout(opts.timeout, () => resp.destroy(new Error('timeout')));
+                }
+
                 resolve({
                     'protocol': opts.connectionOptions.createConnection ? C.EProtocol.HTTPS_1 : C.EProtocol.HTTP_1,
                     'gzip': opts.gzip,
