@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Angus.Fenying <fenying@litert.org>
+ * Copyright 2023 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,9 +68,9 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
                     'deflate': opts.deflate,
                     'stream': resp,
                     'headers': resp.headers as any,
-                    'statusCode': resp.statusCode as number,
+                    'statusCode': resp.statusCode!,
                     'contentLength': resp.headers[C.Headers.CONTENT_LENGTH_H1] === undefined ?
-                        Infinity : parseInt(resp.headers[C.Headers.CONTENT_LENGTH_H1] as string),
+                        Infinity : parseInt(resp.headers[C.Headers.CONTENT_LENGTH_H1] ),
                     'noEntity': !this._.hasEntity(opts.method),
                 });
 

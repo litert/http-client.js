@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Angus.Fenying <fenying@litert.org>
+ * Copyright 2023 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,13 @@ import { HttpHelper } from './Internal/Helper';
 
 class HttpClient implements C.IClient {
 
-    private _clients: Record<'h1' | 'h1s' | 'h2' | 'h2s', I.IProtocolClient>;
+    private readonly _clients: Record<'h1' | 'h1s' | 'h2' | 'h2s', I.IProtocolClient>;
 
     public filters: Filters.IFilterManager;
 
-    private _kvCache: C.IKeyValueCache;
+    private readonly _kvCache: C.IKeyValueCache;
 
-    private _: I.IHelper;
+    private readonly _: I.IHelper;
 
     public constructor(opts?: Partial<C.IClientOptions>) {
 

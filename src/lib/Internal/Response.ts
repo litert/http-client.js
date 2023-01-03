@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Angus.Fenying <fenying@litert.org>
+ * Copyright 2023 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,21 +39,21 @@ const EMPTY_BUFFER = Buffer.allocUnsafe(0);
 export class HttpClientResponse implements C.IResponse {
 
     public constructor(
-        private _protocol: C.EProtocol,
-        private _stream: Readable,
-        private _contentLength: number,
-        private _headers: C.TResponseHeaders,
-        private _statusCode: number,
-        private _gzip?: boolean,
-        private _deflate?: boolean,
-        private _noEntity?: boolean
+        private readonly _protocol: C.EProtocol,
+        private readonly _stream: Readable,
+        private readonly _contentLength: number,
+        private readonly _headers: C.TResponseHeaders,
+        private readonly _statusCode: number,
+        private readonly _gzip?: boolean,
+        private readonly _deflate?: boolean,
+        private readonly _noEntity?: boolean
     ) {
 
     }
 
     public abort(): void {
 
-        let s = this._stream as any;
+        const s = this._stream as any;
 
         if (s.close) {
 
@@ -130,7 +130,7 @@ export class HttpClientResponse implements C.IResponse {
 
                         resp.destroy();
 
-                        return reject(new E.E_TOO_LARGE_RESPONSE_ENTITY());
+                        reject(new E.E_TOO_LARGE_RESPONSE_ENTITY()); return;
                     }
 
                     data.push(chunk);

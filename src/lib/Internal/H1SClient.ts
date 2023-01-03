@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Angus.Fenying <fenying@litert.org>
+ * Copyright 2023 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
             opts.maxConnections = opts.concurrency;
         }
 
-        let agent = this._getAgent(opts, key);
+        const agent = this._getAgent(opts, key);
 
         const REQ_ENTITY = this._.requireEntity(opts.method);
 

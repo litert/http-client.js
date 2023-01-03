@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Angus.Fenying <fenying@litert.org>
+ * Copyright 2023 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ const server = $NativeHttp.createServer(function(req, resp) {
 
             resp.setHeader(
                 $Http.Headers.CONTENT_LENGTH_H1,
-                req.headers[$Http.Headers.CONTENT_LENGTH_H1] as string
+                req.headers[$Http.Headers.CONTENT_LENGTH_H1]
             );
         }
 

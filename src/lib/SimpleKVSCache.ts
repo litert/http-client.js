@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Angus.Fenying <fenying@litert.org>
+ * Copyright 2023 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ interface ICachedItem {
 
 export function createSimpleKVSCache(ttl: number): C.IKeyValueCache {
 
-    let data: Record<string, ICachedItem> = {};
+    const data: Record<string, ICachedItem> = {};
 
     return {
         get(key: string): any {

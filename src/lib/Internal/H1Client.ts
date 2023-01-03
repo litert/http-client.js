@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Angus.Fenying <fenying@litert.org>
+ * Copyright 2023 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ export class H1Client extends AbstractHttp1Client implements A.IProtocolClient {
             opts.maxConnections = opts.concurrency;
         }
 
-        let agent = this._getAgent(opts);
+        const agent = this._getAgent(opts);
 
         const REQ_ENTITY = this._.requireEntity(opts.method);
 
@@ -84,7 +84,7 @@ export class H1Client extends AbstractHttp1Client implements A.IProtocolClient {
             opts.headers['host'] = opts.url.hostname;
         }
 
-        let h1Opts: $H1.RequestOptions = {
+        const h1Opts: $H1.RequestOptions = {
             host: opts.connectionOptions.remoteHost ?? opts.url.hostname,
             port: opts.url.port,
             method: opts.method,

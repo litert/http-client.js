@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Angus.Fenying <fenying@litert.org>
+ * Copyright 2023 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,7 +191,9 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
         }
     }
 
-    protected abstract _prepareOptions(opts: C.IRequestOptions): $H2.SecureClientSessionOptions | $H2.ClientSessionOptions;
+    protected abstract _prepareOptions(
+        opts: C.IRequestOptions
+    ): $H2.SecureClientSessionOptions | $H2.ClientSessionOptions;
 
     protected async _processRequest(
         opts: C.IRequestOptions,
@@ -260,7 +262,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
                 req.setTimeout(opts.timeout);
             }
 
-            return new Promise((resolve, reject) => {
+            return await new Promise((resolve, reject) => {
 
                 req.on('response', (respHeaders) => {
 
@@ -284,7 +286,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
                         req.removeAllListeners('close');
                         reject(e);
                     })
-                    .on('close', () => this._releaseConnection(key, connId, conn));
+                    .on('close', () => { this._releaseConnection(key, connId, conn); });
             });
         }
         catch (e) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Angus.Fenying <fenying@litert.org>
+ * Copyright 2023 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@ export class HttpHelper implements A.IHelper {
             case 'OPTIONS':
             case 'TRACE':
                 return false;
+            default:
+                return true;
         }
-
-        return true;
     }
 
     /**
@@ -45,9 +45,9 @@ export class HttpHelper implements A.IHelper {
             case 'HEAD':
             case 'TRACE':
                 return false;
+            default:
+                return true;
         }
-
-        return true;
     }
 
     public buildPath(url: C.IUrl): string {
