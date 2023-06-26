@@ -1,5 +1,9 @@
 # Changes Logs
 
+## v1.0.5
+
+- fix(client): fixed timeout while sending request by HTTP/1.1.
+
 ## v1.0.4
 
 - fix(client): HTTP/2 should use hostname in URL as host instead of `remoteHost`

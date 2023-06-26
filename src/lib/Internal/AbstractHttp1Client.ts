@@ -55,6 +55,8 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
 
         return new Promise((resolve, reject) => {
 
+            theReq.setTimeout(opts.timeout, () => theReq.destroy(new Error('timeout')));
+
             theReq.on('response', (resp: $H1.IncomingMessage) => {
 
                 if (opts.timeout) {
