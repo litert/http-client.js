@@ -3,6 +3,7 @@
 ## v1.1.0
 
 - fix(client): HTTP/2 should ignore body of DELETE method.
+- fix(client): Use HTTP/1.1 when ALPN is not supported by remote server.
 - build(deps): removed all runtime dependencies.
 
 ## v1.0.5

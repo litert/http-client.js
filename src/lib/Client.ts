@@ -107,7 +107,7 @@ class HttpClient implements C.IClient {
             'timeout': _default(optsIn, 'timeout', C.DEFAULT_TIMEOUT),
             'keepAlive': _default(optsIn, 'keepAlive', true),
             'keepAliveTimeout': _default(optsIn, 'keepAliveTimeout', C.DEFAULT_KEEP_ALIVE_TTL),
-            'version': _default(optsIn, 'version', (optsIn.url.protocol === 'http' ? C.EVersion.HTTP_1_1 : C.EVersion.AUTO)),
+            'version': _default(optsIn, 'version', C.EVersion.HTTP_1_1),
             'maxConnections': _default(optsIn, 'maxConnections', Infinity),
             'concurrency': _default(optsIn, 'concurrency', Infinity),
             'ca': _default(optsIn, 'ca', ''),
@@ -234,42 +234,37 @@ class HttpClient implements C.IClient {
 
                 conn.removeAllListeners('error');
 
-                if (conn.alpnProtocol === 'h2') {
+                switch (conn.alpnProtocol) {
+                    case false:
+                    case 'http/1.1': {
 
-                    const key: string = this._clients.h2s.getAuthorityKey(opts);
+                        const key: string = this._clients.h2s.getAuthorityKey(opts);
 
-                    this._kvCache.set(key, 'h2s');
+                        this._kvCache.set(key, 'h1s');
 
-                    /**
-                     * The bug in NodeJS v12.x and v13.x, the library does not reset the `secureConnecting`.
-                     *
-                     * @see https://github.com/nodejs/node/issues/33343#issuecomment-677940309
-                     */
-                    (conn as any).secureConnecting = false;
+                        resolve(this._wrapResponse(this._clients.h1s.request(
+                            opts,
+                            conn,
+                            key
+                        )));
+                        break;
+                    }
+                    case 'h2':{
 
-                    resolve(this._wrapResponse(this._clients.h2s.request(
-                        opts,
-                        conn,
-                        key
-                    )));
-                }
-                else if (conn.alpnProtocol === 'http/1.1') {
+                        const key: string = this._clients.h2s.getAuthorityKey(opts);
 
-                    const key: string = this._clients.h2s.getAuthorityKey(opts);
+                        this._kvCache.set(key, 'h2s');
 
-                    this._kvCache.set(key, 'h1s');
-
-                    resolve(this._wrapResponse(this._clients.h1s.request(
-                        opts,
-                        conn,
-                        key
-                    )));
-                }
-                else {
-
-                    conn.destroy();
-
-                    reject(new E.E_PROTOCOL_NOT_SUPPORTED());
+                        resolve(this._wrapResponse(this._clients.h2s.request(
+                            opts,
+                            conn,
+                            key
+                        )));
+                        break;
+                    }
+                    default:
+                        conn.destroy();
+                        reject(new E.E_PROTOCOL_NOT_SUPPORTED());
                 }
             });
 

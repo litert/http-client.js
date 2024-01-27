@@ -36,10 +36,7 @@ export class H2SClient extends AbstractHttp2Client implements A.IProtocolClient 
 
         if (tlsSocket) {
 
-            if (!opts.connectionOptions) {
-
-                opts.connectionOptions = {};
-            }
+            opts.connectionOptions ??= {};
 
             opts.connectionOptions.createConnection = () => tlsSocket;
         }
@@ -77,13 +74,13 @@ export class H2SClient extends AbstractHttp2Client implements A.IProtocolClient 
 
         if (opts.ca) {
 
-            const hasher = $Crypto.createHash('md5');
+            const hash = $Crypto.createHash('md5');
 
-            hasher.update(`${this._.getAuthority(opts.url)}/la:${opts.localAddress}/tls_v${opts.minTLSVersion}/ca:`);
+            hash.update(`${this._.getAuthority(opts.url)}/la:${opts.localAddress}/tls_v${opts.minTLSVersion}/ca:`);
 
-            hasher.end(opts.ca);
+            hash.end(opts.ca);
 
-            return hasher.digest('base64');
+            return hash.digest('base64');
         }
 
         return `${this._.getAuthority(opts.url)}/la:${opts.localAddress}/tls_v${opts.minTLSVersion}`;
