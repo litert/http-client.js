@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,14 +56,14 @@ export class HttpHelper implements A.IHelper {
 
         if (url.query) {
 
-            ret += `?${$QS.stringify(url.query as any)}`;
+            ret += `?${$QS.stringify(url.query as Record<string, string>)}`;
         }
 
         return ret;
     }
 
-    public getAuthroity(url: C.IUrl): string {
+    public getAuthority(url: C.IUrl): string {
 
-        return `${url.protocol}://${url.hostname}:${url.port}`.toLowerCase();
+        return `${url.protocol}://${url.hostname}:${url.port!}`.toLowerCase();
     }
 }

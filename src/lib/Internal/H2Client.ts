@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,6 @@ export class H2Client extends AbstractHttp2Client implements A.IProtocolClient {
 
     public getAuthorityKey(opts: C.IRequestOptions): string {
 
-        return `${this._.getAuthroity(opts.url)}/la:${opts.localAddress}`;
+        return `${this._.getAuthority(opts.url)}/la:${opts.localAddress}`;
     }
 }

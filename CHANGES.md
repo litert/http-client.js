@@ -1,5 +1,10 @@
 # Changes Logs
 
+## v1.1.0
+
+- fix(client): HTTP/2 should ignore body of DELETE method.
+- build(deps): removed all runtime dependencies.
+
 ## v1.0.5
 
 - fix(client): fixed timeout while sending request by HTTP/1.1.

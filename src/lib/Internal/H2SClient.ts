@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ export class H2SClient extends AbstractHttp2Client implements A.IProtocolClient 
              * Always set servername, for SNI.
              */
             'servername': opts.url.hostname,
-            'minVersion': `TLSv${opts.minTLSVersion}` as any
+            'minVersion': `TLSv${opts.minTLSVersion}` as `TLSv1.2`
         };
 
         if (opts.ca) {
@@ -79,13 +79,13 @@ export class H2SClient extends AbstractHttp2Client implements A.IProtocolClient 
 
             const hasher = $Crypto.createHash('md5');
 
-            hasher.update(`${this._.getAuthroity(opts.url)}/la:${opts.localAddress}/tls_v${opts.minTLSVersion}/ca:`);
+            hasher.update(`${this._.getAuthority(opts.url)}/la:${opts.localAddress}/tls_v${opts.minTLSVersion}/ca:`);
 
             hasher.end(opts.ca);
 
             return hasher.digest('base64');
         }
 
-        return `${this._.getAuthroity(opts.url)}/la:${opts.localAddress}/tls_v${opts.minTLSVersion}`;
+        return `${this._.getAuthority(opts.url)}/la:${opts.localAddress}/tls_v${opts.minTLSVersion}`;
     }
 }

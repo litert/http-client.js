@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ export interface IBearerAuthentication extends IAuthentication {
 
 export type TRequestHeaders = Record<string, string | number>;
 
-export enum ETLSVersion {
+export enum ETlsVersion {
 
     TLS_V1 = 1,
     TLS_V1_1 = 1.1,
@@ -86,7 +86,7 @@ export interface IRequestOptions {
      *
      * @default 1.1
      */
-    minTLSVersion: ETLSVersion;
+    minTLSVersion: ETlsVersion;
 
     /**
      * The entity content to be sent to server-side.

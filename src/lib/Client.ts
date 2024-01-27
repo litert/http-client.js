@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import * as C from './Common';
 import * as $url from 'url';
 import * as $TLS from 'tls';
 import * as E from './Errors';
-import { Filters } from '@litert/observable';
+import * as Filters from './Filters';
 import { createSimpleKVSCache } from './SimpleKVSCache';
 import * as I from './Internal';
 import { HttpHelper } from './Internal/Helper';
@@ -27,7 +27,7 @@ class HttpClient implements C.IClient {
 
     private readonly _clients: Record<'h1' | 'h1s' | 'h2' | 'h2s', I.IProtocolClient>;
 
-    public filters: Filters.IFilterManager;
+    public readonly filters: Filters.IFilterManager<C.IFilters, true>;
 
     private readonly _kvCache: C.IKeyValueCache;
 
@@ -35,7 +35,7 @@ class HttpClient implements C.IClient {
 
     public constructor(opts?: Partial<C.IClientOptions>) {
 
-        this.filters = opts?.filters ?? Filters.createFilterManager();
+        this.filters = opts?.filters ?? Filters.createAsyncFilterManager<C.IFilters>();
 
         this._kvCache = opts?.kvCache ?? createSimpleKVSCache(C.DEFAULT_PROTOCOL_DETECTION_CACHE_TTL);
 
@@ -60,7 +60,7 @@ class HttpClient implements C.IClient {
     public async request(optsIn: C.IRequestOptionsInput): Promise<C.IResponse> {
 
         /**
-         * Specify whether requires the entity of request ornot.
+         * Specify whether requires the entity of request or not.
          */
         const REQ_ENTITY: boolean = this._.requireEntity(optsIn.method);
 
@@ -101,7 +101,7 @@ class HttpClient implements C.IClient {
             'url': optsIn.url,
             'headers': _default(optsIn, 'headers', {}),
             'authentication': _default(optsIn, 'authentication', { type: 'none' }),
-            'minTLSVersion': _default(optsIn, 'minTLSVersion', C.ETLSVersion.TLS_V1),
+            'minTLSVersion': _default(optsIn, 'minTLSVersion', C.ETlsVersion.TLS_V1),
             'data': _default(optsIn, 'data', ''),
             'localAddress': _default(optsIn, 'localAddress', ''),
             'timeout': _default(optsIn, 'timeout', C.DEFAULT_TIMEOUT),
@@ -117,7 +117,7 @@ class HttpClient implements C.IClient {
             'connectionOptions': _default(optsIn, 'connectionOptions', {}),
         };
 
-        opts = await this.filters.filter<C.IFilterPrerequest>('pre_request', opts);
+        opts = await this.filters.filter('pre_request', opts);
 
         const headers: C.TRequestHeaders = {};
 

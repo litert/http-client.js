@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
         return new Promise((resolve, reject) => {
 
-            const session = $H2.connect(this._.getAuthroity(opts.url), h2Opts);
+            const session = $H2.connect(this._.getAuthority(opts.url), h2Opts);
 
             session.once('connect', () => {
 
@@ -245,9 +245,13 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
                     opts.data.pipe(req);
                 }
-                else {
+                else if (req.writable) { // if DELETE/GET/HEAD/OPTIONS/TRACE, the writable will be false.
 
                     req.end(opts.data);
+                }
+                else {
+
+                    req.end();
                 }
 
                 delete opts.data;

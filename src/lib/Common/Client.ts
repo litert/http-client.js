@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,11 @@
 
 import * as Req from './Request';
 import * as Resp from './Response';
-import { Filters } from '@litert/observable';
+import type * as Filters from '../Filters';
 
-export type TPreprocessor = (opts: Req.IRequestOptions) => Req.IRequestOptions;
+export interface IFilters {
 
-export interface IFilterPrerequest extends Filters.IFilterTemplate {
-
-    name: 'pre_request';
-
-    callback(value: Req.IRequestOptions): Promise<Req.IRequestOptions>;
+    ['pre_request']: (opts: Req.IRequestOptions) => Req.IRequestOptions;
 }
 
 export interface IKeyValueCache {
@@ -38,12 +34,12 @@ export interface IKeyValueCache {
 
 export interface IClient {
 
-    readonly filters: Filters.IFilterManager;
+    readonly filters: Filters.IFilterManager<IFilters, true>;
 
     /**
      * Start a HTTP request.
      *
-     * @param opts The options for
+     * @param opts The options for the request.
      */
     request(opts: Req.IRequestOptionsInput): Promise<Resp.IResponse>;
 
@@ -55,7 +51,7 @@ export interface IClient {
 
 export interface IClientOptions {
 
-    filters: Filters.IFilterManager;
+    filters: Filters.IFilterManager<IFilters, true>;
 
     kvCache: IKeyValueCache;
 }

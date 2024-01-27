@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ export class HttpClientResponse implements C.IResponse {
         private readonly _statusCode: number,
         private readonly _gzip?: boolean,
         private readonly _deflate?: boolean,
-        private readonly _noEntity?: boolean
+        private readonly _noEntity: boolean = false
     ) {
 
     }

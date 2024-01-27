@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 import * as C from '../Common';
 import * as E from '../Errors';
+import type * as Filters from '../Filters';
 
-export function createBasicPreprocessor(): C.IFilterPrerequest['callback'] {
+export function createBasicPreprocessor(): Filters.IAsyncFilterCallback<C.IFilters['pre_request']> {
 
     // eslint-disable-next-line @typescript-eslint/require-await
     return async (opts: C.IRequestOptions): Promise<C.IRequestOptions> => {

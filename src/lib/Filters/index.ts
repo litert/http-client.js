@@ -14,27 +14,6 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-magic-numbers */
-import * as $Http from '../lib';
-(async (): Promise<void> => {
-
-    const hcli = $Http.createHttpClient();
-
-    const req = await hcli.request({
-        url: 'https://www.google.com',
-        method: 'GET'
-    });
-
-    try {
-
-        console.log(`HTTP/2 ${req.statusCode}`);
-        console.log((await req.getBuffer()).toString());
-    }
-    catch (e) {
-
-        console.error(e);
-    }
-
-    hcli.close();
-
-})().catch((e) => { console.error(e); });
+export * from './Common';
+export * from './Errors';
+export * from './FilterManager';

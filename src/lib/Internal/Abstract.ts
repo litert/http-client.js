@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,5 +67,5 @@ export interface IHelper {
 
     buildPath(url: C.IUrl): string;
 
-    getAuthroity(url: C.IUrl): string;
+    getAuthority(url: C.IUrl): string;
 }

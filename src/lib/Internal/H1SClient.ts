@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
 
     protected _getAuthroityKey(opts: C.IRequestOptions): string {
 
-        return `${this._.getAuthroity(opts.url)}/connections/${opts.maxConnections}`;
+        return `${this._.getAuthority(opts.url)}/connections/${opts.maxConnections}`;
     }
 
     public getAuthorityKey(opts: C.IRequestOptions): string {
@@ -159,13 +159,13 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
 
             const hasher = $Crypto.createHash('md5');
 
-            hasher.update(`${this._.getAuthroity(opts.url)}/tls_v${opts.minTLSVersion}/la:${opts.localAddress}/conns:${opts.maxConnections}/ca:`);
+            hasher.update(`${this._.getAuthority(opts.url)}/tls_v${opts.minTLSVersion}/la:${opts.localAddress}/conns:${opts.maxConnections}/ca:`);
 
             hasher.end(opts.ca);
 
             return hasher.digest('base64');
         }
 
-        return `${this._.getAuthroity(opts.url)}/rh:${opts.connectionOptions.remoteHost ?? opts.url.hostname}/tls_v${opts.minTLSVersion}/la:${opts.localAddress}/conns:${opts.maxConnections}`;
+        return `${this._.getAuthority(opts.url)}/rh:${opts.connectionOptions.remoteHost ?? opts.url.hostname}/tls_v${opts.minTLSVersion}/la:${opts.localAddress}/conns:${opts.maxConnections}`;
     }
 }

@@ -14,27 +14,11 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-magic-numbers */
-import * as $Http from '../lib';
-(async (): Promise<void> => {
+import { AbstractHttpClientError } from '../Errors';
 
-    const hcli = $Http.createHttpClient();
+export const E_DUP_FILTER_FUNCTION = class extends AbstractHttpClientError {
 
-    const req = await hcli.request({
-        url: 'https://www.google.com',
-        method: 'GET'
-    });
+    public static override id = 'dup_filter_function';
 
-    try {
-
-        console.log(`HTTP/2 ${req.statusCode}`);
-        console.log((await req.getBuffer()).toString());
-    }
-    catch (e) {
-
-        console.error(e);
-    }
-
-    hcli.close();
-
-})().catch((e) => { console.error(e); });
+    public static override message = 'The filter function of determined key already exists.';
+};

@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,6 @@ export class H1Client extends AbstractHttp1Client implements A.IProtocolClient {
 
     public getAuthorityKey(opts: C.IRequestOptions): string {
 
-        return `${this._.getAuthroity(opts.url)}/rh:${opts.connectionOptions.remoteHost ?? opts.url.hostname}/la:${opts.localAddress}/conns:${opts.maxConnections}`;
+        return `${this._.getAuthority(opts.url)}/rh:${opts.connectionOptions.remoteHost ?? opts.url.hostname}/la:${opts.localAddress}/conns:${opts.maxConnections}`;
     }
 }

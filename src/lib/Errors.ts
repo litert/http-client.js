@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Angus.Fenying <fenying@litert.org>
+ * Copyright 2024 Angus.Fenying <fenying@litert.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,55 +14,84 @@
  * limitations under the License.
  */
 
-import * as $Exceptions from '@litert/exception';
+/**
+ * The base class of all HttpClient errors.
+ */
+export abstract class AbstractHttpClientError extends Error {
 
-export const errorRegistry = $Exceptions.createExceptionRegistry({
-    'module': 'http-client.litert.org',
-    'types': {
-        'public': {
-            'index': $Exceptions.createIncreaseCodeIndex(1)
+    /**
+     * The unique identifier of the exception.
+     */
+    public static id: string = 'unknown';
+
+    /**
+     * The description message of the exception.
+     */
+    public static message: string = 'unknown';
+
+    /**
+     * The context of the exception.
+     */
+    public static context?: Record<string, unknown>;
+
+    public constructor(
+        public context: Record<string, unknown> = {},
+        public readonly origin: unknown = null
+    ) {
+
+        super();
+
+        this.name = (this as any).constructor.id;
+        this.message = (this as any).constructor.message;
+
+        if ((this as any).constructor.context) {
+
+            this.context = {
+                ...(this as any).constructor.context,
+                ...context,
+            };
         }
     }
-});
+}
 
-export const E_EMPTY_AUTH_CREDENTIALS = errorRegistry.register({
-    name: 'empty_auth_credentials',
-    message: 'The authentication credential is empty.',
-    metadata: {},
-    type: 'public'
-});
+export const E_EMPTY_AUTH_CREDENTIALS = class extends AbstractHttpClientError {
 
-export const E_UNKNOWN_AUTH_TYPE = errorRegistry.register({
-    name: 'unknown_auth_type',
-    message: 'The type of authentication is not recognizable.',
-    metadata: {},
-    type: 'public'
-});
+    public static override id = 'empty_auth_credentials';
 
-export const E_NO_CONTENT_LENGTH = errorRegistry.register({
-    name: 'no_content_length',
-    message: 'The header content-length is not specific.',
-    metadata: {},
-    type: 'public'
-});
+    public static override message = 'The authentication credential is empty.';
+};
 
-export const E_PROTOCOL_NOT_SUPPORTED = errorRegistry.register({
-    name: 'protocol_not_supported',
-    message: 'The protocol is not supported.',
-    metadata: {},
-    type: 'public'
-});
+export const E_UNKNOWN_AUTH_TYPE = class extends AbstractHttpClientError {
 
-export const E_TOO_LARGE_RESPONSE_ENTITY = errorRegistry.register({
-    name: 'too_large_response_entity',
-    message: 'The entity of response is too large.',
-    metadata: {},
-    type: 'public'
-});
+    public static override id = 'unknown_auth_type';
 
-export const E_NO_RESPONSE_ENTITY = errorRegistry.register({
-    name: 'no_response_entity',
-    message: 'The response entity is empty.',
-    metadata: {},
-    type: 'public'
-});
+    public static override message = 'The type of authentication is not recognizable.';
+};
+
+export const E_NO_CONTENT_LENGTH = class extends AbstractHttpClientError {
+
+    public static override id = 'no_content_length';
+
+    public static override message = 'The header content-length is not specific.';
+};
+
+export const E_PROTOCOL_NOT_SUPPORTED = class extends AbstractHttpClientError {
+
+    public static override id = 'protocol_not_supported';
+
+    public static override message = 'The protocol is not supported.';
+};
+
+export const E_TOO_LARGE_RESPONSE_ENTITY = class extends AbstractHttpClientError {
+
+    public static override id = 'too_large_response_entity';
+
+    public static override message = 'The entity of response is too large.';
+};
+
+export const E_NO_RESPONSE_ENTITY = class extends AbstractHttpClientError {
+
+    public static override id = 'no_response_entity';
+
+    public static override message = 'The response entity is empty.';
+};
