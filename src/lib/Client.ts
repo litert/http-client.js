@@ -255,9 +255,11 @@ class HttpClient implements C.IClient {
 
                         this._kvCache.set(key, 'h2s');
 
+                        conn.destroy(); // Don't use the connection preventing from memory leak.
+
                         resolve(this._wrapResponse(this._clients.h2s.request(
                             opts,
-                            conn,
+                            undefined,
                             key
                         )));
                         break;

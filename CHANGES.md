@@ -4,6 +4,7 @@
 
 - fix(client): HTTP/2 should ignore body of DELETE method.
 - fix(client): Use HTTP/1.1 when ALPN is not supported by remote server.
+- fix(client): Preventing from memory leak when `h2` is selected by ALPN.
 - build(deps): removed all runtime dependencies.
 
 ## v1.0.5
