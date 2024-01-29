@@ -34,7 +34,7 @@ export abstract class AbstractProtocolClient {
 
             opts.headers[C.Headers.CONTENT_LENGTH_H1] = opts.data.byteLength;
         }
-        else if (!Number.isInteger(opts.headers[C.Headers.CONTENT_LENGTH_H1] as any)) {
+        else if ((opts.headers[C.Headers.CONTENT_LENGTH_H1] ?? -1) === -1) {
 
             throw new E.E_NO_CONTENT_LENGTH();
         }
