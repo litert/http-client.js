@@ -53,5 +53,9 @@ export type CreateInputOptions<T, TRequired extends keyof T, TOptional extends k
 export enum EVersion {
     HTTP_1_1 = 1.1,
     HTTP_2 = 2,
-    AUTO = 0
+    /**
+     * @deprecated Use `EVersion.ALPN` instead.
+     */
+    AUTO = 0,
+    ALPN = 0,
 }

@@ -159,7 +159,7 @@ class HttpClient implements C.IClient {
             /**
              * When version is set to `0`, detect the protocol supported by server automatically.
              */
-            if (opts.version === C.EVersion.AUTO) {
+            if (opts.version === C.EVersion.ALPN) {
 
                 for (const k of ['h1s', 'h2s'] as const) {
 
@@ -190,7 +190,7 @@ class HttpClient implements C.IClient {
             switch (opts.version) {
                 case C.EVersion.HTTP_2:
                     return this._wrapResponse(this._clients.h2.request(opts));
-                case C.EVersion.AUTO:
+                case C.EVersion.ALPN:
                 case C.EVersion.HTTP_1_1:
                     return this._wrapResponse(this._clients.h1.request(opts));
                 default:
