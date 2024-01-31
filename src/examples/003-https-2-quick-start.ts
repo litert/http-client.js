@@ -29,6 +29,7 @@ const server = $NativeHttps.createSecureServer({
     ca: $FS.readFileSync('./test/ca/cert.pem'),
     cert: $FS.readFileSync('./test/certs/b.local.org/cert.pem'),
     key: $FS.readFileSync('./test/certs/b.local.org/key.pem'),
+    allowHTTP1: true,
 }, function(req, resp) {
 
     if (req.method === 'GET') {
@@ -143,6 +144,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             },
             method: 'POST',
             localAddress: '127.0.0.22',
+            version: $Http.EVersion.ALPN,
             ca: $FS.readFileSync('./test/ca/cert.pem'),
             data: 'Auto-detected HTTP/2',
             connectionOptions: {
@@ -170,6 +172,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             },
             method: 'POST',
             localAddress: '127.0.0.22',
+            version: $Http.EVersion.ALPN,
             ca: $FS.readFileSync('./test/ca/cert.pem'),
             data: 'Auto-detected HTTP/2',
             connectionOptions: {
@@ -196,6 +199,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
                 pathname: '/',
             },
             method: 'GET',
+            version: $Http.EVersion.ALPN,
             localAddress: '127.0.0.22',
             ca: $FS.readFileSync('./test/ca/cert.pem'),
             connectionOptions: {
@@ -214,6 +218,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
                 pathname: '/',
             },
             method: 'GET',
+            version: $Http.EVersion.ALPN,
             localAddress: '127.0.0.22',
             ca: $FS.readFileSync('./test/ca/cert.pem'),
             connectionOptions: {
@@ -224,6 +229,159 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
         try {
 
             console.log(`HTTP/2 ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
+
+        }
+        catch (e) {
+
+            console.error(e);
+        }
+
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'GET',
+            // version: $Http.EVersion.ALPN, // should use HTTP/1.1 by default here
+            localAddress: '127.0.0.22',
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
+        });
+
+        try {
+
+            console.log(`HTTP/${req.protocol === $Http.EProtocol.HTTP_1 ? '1.1' : '2'} ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
+        }
+        catch (e) {
+
+            console.error(e);
+        }
+
+        hcli.filters.register({ // now force to use ALPN
+            name: 'pre_request',
+            key: 'force_alpn',
+            callback: (req) => {
+                req.version = $Http.EVersion.ALPN;
+                return req;
+            }
+        });
+
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'GET',
+            localAddress: '127.0.0.22',
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
+        });
+
+        try {
+
+            console.log(`HTTP/${req.protocol === $Http.EProtocol.HTTP_1 ? '1.1' : '2'} ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
+
+        }
+        catch (e) {
+
+            console.error(e);
+        }
+
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'GET',
+            localAddress: '127.0.0.22',
+            version: $Http.EVersion.HTTP_1_1, // will be ignored
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
+        });
+
+        try {
+
+            console.log(`HTTP/${req.protocol === $Http.EProtocol.HTTP_1 ? '1.1' : '2'} ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
+
+        }
+        catch (e) {
+
+            console.error(e);
+        }
+
+        hcli.filters.unregister('pre_request', 'force_alpn');
+
+        hcli.filters.register({ // now make ALPN as default
+            name: 'pre_args',
+            key: 'default_version',
+            callback: (req) => {
+                req.version ??= $Http.EVersion.ALPN;
+                return req;
+            }
+        });
+
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'GET',
+            localAddress: '127.0.0.22',
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            // version: $Http.EVersion.ALPN, // will use ALPN by default
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
+        });
+
+        try {
+
+            console.log(`HTTP/${req.protocol === $Http.EProtocol.HTTP_1 ? '1.1' : '2'} ${req.statusCode}`);
+            console.log((await req.getBuffer()).toString());
+
+        }
+        catch (e) {
+
+            console.error(e);
+        }
+
+        req = await hcli.request({
+            url: {
+                protocol: 'https',
+                hostname: SERVER_HOST,
+                port: SERVER_PORT,
+                pathname: '/',
+            },
+            method: 'GET',
+            localAddress: '127.0.0.22',
+            version: $Http.EVersion.HTTP_1_1, // will use 1.1
+            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            connectionOptions: {
+                remoteHost: SERVER_ADDR
+            }
+        });
+
+        try {
+
+            console.log(`HTTP/${req.protocol === $Http.EProtocol.HTTP_1 ? '1.1' : '2'} ${req.statusCode}`);
             console.log((await req.getBuffer()).toString());
 
         }

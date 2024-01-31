@@ -7,6 +7,7 @@
 - fix(client): Preventing from memory leak when `h2` is selected by ALPN.
 - fix(client): Allow string-type content-length.
 - fix(client): Renamed `EVersion.AUTO` to `EVersion.ALPN`.
+- feat(client): Added filter hook `pre_args` to initialize request arguments, before processing it.
 - build(deps): removed all runtime dependencies.
 
 ## v1.0.5

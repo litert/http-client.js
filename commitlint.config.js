@@ -12,6 +12,7 @@ module.exports = {
             'api',
             'hook',
             'docs',
+            'test',
             'lint',
             'branch',
             'deps',

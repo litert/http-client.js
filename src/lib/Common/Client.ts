@@ -21,6 +21,8 @@ import type * as Filters from '../Filters';
 export interface IFilters {
 
     ['pre_request']: (opts: Req.IRequestOptions) => Req.IRequestOptions;
+
+    ['pre_args']: (opts: Req.IRequestOptionsInput) => Req.IRequestOptionsInput;
 }
 
 export interface IKeyValueCache {

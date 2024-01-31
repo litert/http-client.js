@@ -69,6 +69,8 @@ class HttpClient implements C.IClient {
             optsIn.data = '';
         }
 
+        optsIn = await this.filters.filter('pre_args', optsIn);
+
         if (typeof optsIn.url === 'string') {
 
             const theURL = $url.parse(optsIn.url, true);
