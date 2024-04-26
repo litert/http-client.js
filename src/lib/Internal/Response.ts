@@ -38,6 +38,8 @@ const EMPTY_BUFFER = Buffer.allocUnsafe(0);
 
 export class HttpClientResponse implements C.IResponse {
 
+    private _error: unknown = null;
+
     public constructor(
         private readonly _protocol: C.EProtocol,
         private readonly _stream: Readable,
@@ -49,6 +51,10 @@ export class HttpClientResponse implements C.IResponse {
         private readonly _noEntity: boolean = false
     ) {
 
+        this._stream.on('error', (e) => {
+
+            this._error = e;
+        });
     }
 
     public abort(): void {
@@ -86,6 +92,16 @@ export class HttpClientResponse implements C.IResponse {
     }
 
     public getBuffer(maxLength: number = Infinity): Promise<Buffer> {
+
+        if (this._error) {
+
+            if (!this._stream.closed) {
+
+                this._stream.destroy();
+            }
+
+            return Promise.reject(this._error);
+        }
 
         if (maxLength <= 0 || this.contentLength <= 0 || this._noEntity) {
 
@@ -155,6 +171,16 @@ export class HttpClientResponse implements C.IResponse {
 
     public getStream(): Readable {
 
+        if (this._error) {
+
+            if (!this._stream.closed) {
+
+                this._stream.destroy();
+            }
+
+            throw this._error;
+        }
+
         if (this._noEntity || this._statusCode === 204) {
 
             throw new E.E_NO_RESPONSE_ENTITY();
@@ -175,6 +201,16 @@ export class HttpClientResponse implements C.IResponse {
     }
 
     public getRawStream(): Readable {
+
+        if (this._error) {
+
+            if (!this._stream.closed) {
+
+                this._stream.destroy();
+            }
+
+            throw this._error;
+        }
 
         if (this._noEntity || this._statusCode === 204) {
 
@@ -217,5 +253,4 @@ export class HttpClientResponse implements C.IResponse {
 
         return this._statusCode === HTTP_STATUS_CODE_UPGRADE;
     }
-
 }

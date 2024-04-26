@@ -1,5 +1,9 @@
 # Changes Logs
 
+## v1.1.1
+
+- fix(client): Catch the connection error between request and getBuffer/getStream.
+
 ## v1.1.0
 
 - fix(client): HTTP/2 should ignore body of DELETE method.
