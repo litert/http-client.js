@@ -1,5 +1,9 @@
 # Changes Logs
 
+## v1.1.2
+
+- fix(client): Fixed `IResponse.isServerError` method.
+
 ## v1.1.1
 
 - fix(client): Catch the connection error between request and getBuffer/getStream.
