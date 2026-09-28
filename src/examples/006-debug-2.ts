@@ -24,12 +24,12 @@ const SERVER_HOST = 'b.local.org';
 const SERVER_PORT = 8089;
 const SERVER_BACKLOG = 512;
 
-const THE_CA = $FS.readFileSync('./test/ca/cert.pem');
+const THE_CA = $FS.readFileSync('./test-data/ca/cert.pem');
 
 const server = $NativeHttps.createSecureServer({
     ca: THE_CA,
-    cert: $FS.readFileSync('./test/certs/b.local.org/cert.pem'),
-    key: $FS.readFileSync('./test/certs/b.local.org/key.pem'),
+    cert: $FS.readFileSync('./test-data/certs/b.local.org/cert.pem'),
+    key: $FS.readFileSync('./test-data/certs/b.local.org/key.pem'),
 }, function(req, resp) {
 
     resp.setHeader('content-type', 'text/plain');
@@ -50,9 +50,11 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
         console.log('TLS ok');
         $NativeHttps.connect(`https://${SERVER_ADDR}:${SERVER_PORT}`, {
             createConnection() { return socket; }
-        }, function() {
+        }, function(c) {
 
             console.log('H2 ok');
+            c.close();
+            server.close();
         }).on('error', console.error);
     });
 });

@@ -28,10 +28,11 @@
     "noImplicitReturns": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
-    "lib": ["es2017"],
+    "lib": ["es2020"],
     "newLine": "LF",
     "alwaysStrict": true,
     /* Strict Type-Checking Options */        
+    // "types": ["node"],                           /* Type declaration files to be included in compilation. */
     "strict": true                            /* Enable all strict type-checking options. */
     // "noImplicitAny": true,                 /* Raise error on expressions and declarations with an implied 'any' type. */
     // "strictNullChecks": true,              /* Enable strict null checks. */
@@ -50,7 +51,6 @@
     // "paths": {},                           /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
     // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */
     // "typeRoots": [],                       /* List of folders to include type definitions from. */
-    // "types": [],                           /* Type declaration files to be included in compilation. */
     // "allowSyntheticDefaultImports": true,  /* Allow default imports from modules with no default export. This does not affect code emit, just typechecking. */
 
     /* Source Map Options */                  
@@ -65,6 +65,11 @@
   },
   "exclude": [
     "./*.d.ts",
-    "./**/*.d.ts"
+    "./*.js",
+    "./**/*.d.ts",
+    "./**/*.js"
+  ],
+  "include": [
+    "./src/**/*.ts",
   ]
 }

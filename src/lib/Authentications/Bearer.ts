@@ -25,7 +25,7 @@ export function createBearerPreprocessor(): Filters.IAsyncFilterCallback<C.IFilt
 
         const auth = opts.authentication as C.IBearerAuthentication;
 
-        if (auth && auth.type.toLowerCase() === 'bearer') {
+        if (auth?.type.toLowerCase() === 'bearer') {
 
             if (!auth.credentials) {
 

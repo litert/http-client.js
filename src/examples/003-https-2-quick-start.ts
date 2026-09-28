@@ -26,9 +26,9 @@ const SERVER_PORT = 8089;
 const SERVER_BACKLOG = 512;
 
 const server = $NativeHttps.createSecureServer({
-    ca: $FS.readFileSync('./test/ca/cert.pem'),
-    cert: $FS.readFileSync('./test/certs/b.local.org/cert.pem'),
-    key: $FS.readFileSync('./test/certs/b.local.org/key.pem'),
+    ca: $FS.readFileSync('./test-data/ca/cert.pem'),
+    cert: $FS.readFileSync('./test-data/certs/b.local.org/cert.pem'),
+    key: $FS.readFileSync('./test-data/certs/b.local.org/key.pem'),
     allowHTTP1: true,
 }, function(req, resp) {
 
@@ -90,7 +90,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             },
             method: 'POST',
             version: $Http.EVersion.HTTP_2,
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            ca: $FS.readFileSync('./test-data/ca/cert.pem'),
             data: 'GZIP Result: hello world! angus',
             connectionOptions: {
                 remoteHost: SERVER_ADDR
@@ -117,7 +117,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             method: 'POST',
             version: $Http.EVersion.HTTP_2,
             localAddress: '127.0.0.24',
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            ca: $FS.readFileSync('./test-data/ca/cert.pem'),
             data: 'Plain Result: hello world! angus',
             connectionOptions: {
                 remoteHost: SERVER_ADDR
@@ -145,7 +145,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             method: 'POST',
             localAddress: '127.0.0.22',
             version: $Http.EVersion.ALPN,
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            ca: $FS.readFileSync('./test-data/ca/cert.pem'),
             data: 'Auto-detected HTTP/2',
             connectionOptions: {
                 remoteHost: SERVER_ADDR
@@ -173,7 +173,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             method: 'POST',
             localAddress: '127.0.0.22',
             version: $Http.EVersion.ALPN,
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            ca: $FS.readFileSync('./test-data/ca/cert.pem'),
             data: 'Auto-detected HTTP/2',
             connectionOptions: {
                 remoteHost: SERVER_ADDR
@@ -201,7 +201,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             method: 'GET',
             version: $Http.EVersion.ALPN,
             localAddress: '127.0.0.22',
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            ca: $FS.readFileSync('./test-data/ca/cert.pem'),
             connectionOptions: {
                 remoteHost: SERVER_ADDR
             }
@@ -220,7 +220,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             method: 'GET',
             version: $Http.EVersion.ALPN,
             localAddress: '127.0.0.22',
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            ca: $FS.readFileSync('./test-data/ca/cert.pem'),
             connectionOptions: {
                 remoteHost: SERVER_ADDR
             }
@@ -247,7 +247,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             method: 'GET',
             // version: $Http.EVersion.ALPN, // should use HTTP/1.1 by default here
             localAddress: '127.0.0.22',
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            ca: $FS.readFileSync('./test-data/ca/cert.pem'),
             connectionOptions: {
                 remoteHost: SERVER_ADDR
             }
@@ -281,7 +281,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             },
             method: 'GET',
             localAddress: '127.0.0.22',
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            ca: $FS.readFileSync('./test-data/ca/cert.pem'),
             connectionOptions: {
                 remoteHost: SERVER_ADDR
             }
@@ -308,7 +308,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             method: 'GET',
             localAddress: '127.0.0.22',
             version: $Http.EVersion.HTTP_1_1, // will be ignored
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            ca: $FS.readFileSync('./test-data/ca/cert.pem'),
             connectionOptions: {
                 remoteHost: SERVER_ADDR
             }
@@ -345,7 +345,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             },
             method: 'GET',
             localAddress: '127.0.0.22',
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            ca: $FS.readFileSync('./test-data/ca/cert.pem'),
             // version: $Http.EVersion.ALPN, // will use ALPN by default
             connectionOptions: {
                 remoteHost: SERVER_ADDR
@@ -373,7 +373,7 @@ server.listen(SERVER_PORT, SERVER_ADDR, SERVER_BACKLOG, (): void => {
             method: 'GET',
             localAddress: '127.0.0.22',
             version: $Http.EVersion.HTTP_1_1, // will use 1.1
-            ca: $FS.readFileSync('./test/ca/cert.pem'),
+            ca: $FS.readFileSync('./test-data/ca/cert.pem'),
             connectionOptions: {
                 remoteHost: SERVER_ADDR
             }

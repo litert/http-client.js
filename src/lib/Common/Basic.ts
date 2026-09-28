@@ -19,7 +19,6 @@
  */
 export type THttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'TRACE' | 'DELETE' | 'OPTIONS';
 
-/* eslint-disable @typescript-eslint/indent */
 /**
  * The request methods defined in WebDAV standard.
  */
@@ -27,7 +26,6 @@ export type TWebDAVMethod = 'PATCH' | 'COPY' | 'LOCK' | 'UNLOCK' |
                             'MOVE' | 'MKCOL' | 'PROPFIND' | 'PROPPATCH' |
                             'REPORT' | 'MKACTIVITY' | 'CHECKOUT' | 'MERGE' |
                             'M-SEARCH' | 'NOTIFY' | 'SUBSCRIBE' | 'UNSUBSCRIBE';
-/* eslint-enable @typescript-eslint/indent */
 
 /**
  * The type of available request methods.

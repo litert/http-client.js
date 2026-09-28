@@ -1,5 +1,9 @@
 # Changes Logs
 
+## v1.1.3
+
+- chore: upgraded dev-dependencies
+
 ## v1.1.2
 
 - fix(client): Fixed `IResponse.isServerError` method.

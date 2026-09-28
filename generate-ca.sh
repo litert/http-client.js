@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CA_ROOT=test/ca
+CA_ROOT=test-data/ca
 
 mkdir -p $CA_ROOT
 

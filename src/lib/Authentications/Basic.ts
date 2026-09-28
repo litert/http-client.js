@@ -25,7 +25,7 @@ export function createBasicPreprocessor(): Filters.IAsyncFilterCallback<C.IFilte
 
         const auth = opts.authentication as C.IBasicAuthentication;
 
-        if (auth && auth.type.toLowerCase() === 'basic') {
+        if (auth?.type.toLowerCase() === 'basic') {
 
             if (!auth.username) {
 

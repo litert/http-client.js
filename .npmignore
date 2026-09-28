@@ -9,9 +9,12 @@
 /tsconfig.production.json
 /examples/
 /src/examples/
-/test/
+/test-data/
 /*.sh
 /commitlint.config.js
 /.eslintrc
 /.eslintignore
 /.husky/
+/.agents/
+/.ai/
+/AGENTS.md

@@ -57,7 +57,7 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
             'keepAlive': opts.keepAlive,
             'keepAliveMsecs': opts.keepAliveTimeout,
             ...opts.connectionOptions
-        }) as any;
+        });
     }
 
     public async request(

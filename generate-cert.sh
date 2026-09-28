@@ -9,8 +9,8 @@ if [ -z "$KEY_WIDTH" ]; then
     KEY_WIDTH=2048 # default 2048 bits
 fi
 
-CA_ROOT=test/ca
-CERTS_ROOT=test/certs
+CA_ROOT=test-data/ca
+CERTS_ROOT=test-data/certs
 CA_CONF_FILE=$CA_ROOT/ca.conf
 CA_CERT=$CA_ROOT/cert.pem
 CERT_DIR=$CERTS_ROOT/$DOMAIN_NAME

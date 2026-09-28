@@ -46,7 +46,7 @@ class HttpClient implements C.IClient {
             h2: new I.H2Client(this._),
             h1s: new I.H1SClient(this._),
             h1: new I.H1Client(this._)
-        } as any;
+        };
     }
 
     public close(): void {
@@ -94,7 +94,7 @@ class HttpClient implements C.IClient {
             defaultValue: T[K]
         ): T[K] {
 
-            return obj[key] === undefined ? defaultValue : obj[key] as T[K];
+            return obj[key] ?? defaultValue;
         }
 
         let opts: C.IRequestOptions = {

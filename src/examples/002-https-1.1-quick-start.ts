@@ -27,11 +27,11 @@ const SERVER_HOST_D = 'd.local.org';
 const SERVER_PORT = 8089;
 const SERVER_BACKLOG = 512;
 
-const PEM_CERT_B = $FS.readFileSync('./test/certs/b.local.org/cert.pem');
-const PEM_KEY_B = $FS.readFileSync('./test/certs/b.local.org/key.pem');
-const PEM_CERT_D = $FS.readFileSync('./test/certs/d.local.org/cert.pem');
-const PEM_KEY_D = $FS.readFileSync('./test/certs/d.local.org/key.pem');
-const PEM_CA = $FS.readFileSync('./test/ca/cert.pem');
+const PEM_CERT_B = $FS.readFileSync('./test-data/certs/b.local.org/cert.pem');
+const PEM_KEY_B = $FS.readFileSync('./test-data/certs/b.local.org/key.pem');
+const PEM_CERT_D = $FS.readFileSync('./test-data/certs/d.local.org/cert.pem');
+const PEM_KEY_D = $FS.readFileSync('./test-data/certs/d.local.org/key.pem');
+const PEM_CA = $FS.readFileSync('./test-data/ca/cert.pem');
 
 const server = $NativeHttps.createServer({
     ca: PEM_CA,

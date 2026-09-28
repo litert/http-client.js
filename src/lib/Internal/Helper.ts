@@ -56,7 +56,7 @@ export class HttpHelper implements A.IHelper {
 
         if (url.query) {
 
-            ret += `?${$QS.stringify(url.query as Record<string, string>)}`;
+            ret += `?${$QS.stringify(url.query)}`;
         }
 
         return ret;
