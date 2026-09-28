@@ -19,7 +19,9 @@ import { AbstractProtocolClient } from './AbstractProtocolClient';
 import * as $H2 from 'http2';
 import * as $H1 from 'http';
 import * as A from './Abstract';
+import * as E from '../Errors';
 import { Readable } from 'stream';
+import { pipeline } from 'stream/promises';
 
 interface IConnection {
 
@@ -220,6 +222,19 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
             key
         );
 
+        let connectionReleased = false;
+
+        const releaseConnection = (): void => {
+
+            if (connectionReleased) {
+
+                return;
+            }
+
+            connectionReleased = true;
+            this._releaseConnection(key, connId, conn);
+        };
+
         try {
 
             const REQ_ENTITY = this._.requireEntity(opts.method);
@@ -236,34 +251,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
             const req = conn.connection.request(headers, opts.requestOptions);
 
-            if (REQ_ENTITY) {
-
-                if (opts.data instanceof Readable) {
-
-                    opts.data.pipe(req);
-                }
-                else if (req.writable) { // if DELETE/GET/HEAD/OPTIONS/TRACE, the writable will be false.
-
-                    req.end(opts.data);
-                }
-                else {
-
-                    req.end();
-                }
-
-                delete opts.data;
-            }
-            else {
-
-                req.end();
-            }
-
-            if (opts.timeout) {
-
-                req.setTimeout(opts.timeout);
-            }
-
-            return await new Promise((resolve, reject) => {
+            const response = new Promise<A.IRequestResult>((resolve, reject) => {
 
                 req.on('response', (respHeaders) => {
 
@@ -285,14 +273,57 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
                         req.removeAllListeners('error');
                         req.removeAllListeners('response');
                         req.removeAllListeners('close');
+                        releaseConnection();
                         reject(e);
                     })
-                    .on('close', () => { this._releaseConnection(key, connId, conn); });
+                    .on('close', releaseConnection);
             });
+
+            /**
+             * The request can fail before this method returns the response promise.
+             * Observe that rejection immediately while preserving it for the caller.
+             */
+            void response.catch(() => undefined);
+
+            if (opts.timeout) {
+
+                req.setTimeout(opts.timeout);
+            }
+
+            if (REQ_ENTITY) {
+
+                if (opts.data instanceof Readable) {
+
+                    try {
+
+                        await pipeline(opts.data, req);
+                    }
+                    catch (e) {
+
+                        throw new E.E_NETWORK_FAILED({}, e);
+                    }
+                }
+                else if (req.writable) { // if DELETE/GET/HEAD/OPTIONS/TRACE, the writable will be false.
+
+                    req.end(opts.data);
+                }
+                else {
+
+                    req.end();
+                }
+
+                delete opts.data;
+            }
+            else {
+
+                req.end();
+            }
+
+            return await response;
         }
         catch (e) {
 
-            this._releaseConnection(key, connId, conn);
+            releaseConnection();
 
             throw e;
         }

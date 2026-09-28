@@ -19,8 +19,9 @@
     "typecheck": "echo Using TypeScript && tsc -v && tsc -p . --noEmit",
     "build-watch": "echo Using TypeScript && tsc -v && tsc -w -p .",
     "rebuild": "npm run clean && npm run lint && npm run build",
-    "test": "echo See directory sources/samples",
-    "clean": "rm -rf lib examples",
+    "test": "npm run clean && npm run build && npm run test:compiled",
+    "test:compiled": "node --enable-source-maps --test --experimental-test-coverage 'test/**/*.test.js'",
+    "clean": "rm -rf lib examples test",
     "lint": "./utils/eslint.sh",
     "prepare": "husky"
   },

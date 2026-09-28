@@ -3,6 +3,7 @@
 ## v1.1.3
 
 - chore: upgraded dev-dependencies
+- fix(client): correctly process the input stream when failing to send request bodies.
 
 ## v1.1.2
 

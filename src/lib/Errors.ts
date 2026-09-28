@@ -95,3 +95,10 @@ export const E_NO_RESPONSE_ENTITY = class extends AbstractHttpClientError {
 
     public static override message = 'The response entity is empty.';
 };
+
+export const E_NETWORK_FAILED = class extends AbstractHttpClientError {
+
+    public static override id = 'network_failed';
+
+    public static override message = 'Failed due to network error.';
+};

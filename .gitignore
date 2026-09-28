@@ -1,6 +1,7 @@
 /node_modules/
 /lib/
 /examples/
+/test/
 /test-data/
 AGENTS.md
 .ai/

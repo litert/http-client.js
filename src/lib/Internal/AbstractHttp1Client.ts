@@ -19,6 +19,8 @@ import { AbstractProtocolClient } from './AbstractProtocolClient';
 import { Readable } from 'stream';
 import * as $H1 from 'http';
 import * as A from './Abstract';
+import * as E from '../Errors';
+import { pipeline } from 'stream/promises';
 
 export abstract class AbstractHttp1Client extends AbstractProtocolClient {
 
@@ -29,33 +31,13 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
         super();
     }
 
-    protected _processRequest(
+    protected async _processRequest(
         theReq: $H1.ClientRequest,
         opts: C.IRequestOptions,
         hasReqEntity: boolean
     ): Promise<A.IRequestResult> {
 
-        if (hasReqEntity) {
-
-            if (opts.data instanceof Readable) {
-
-                opts.data.pipe(theReq);
-            }
-            else {
-
-                theReq.end(opts.data);
-            }
-
-            delete opts.data;
-        }
-        else {
-
-            theReq.end();
-        }
-
-        return new Promise((resolve, reject) => {
-
-            theReq.setTimeout(opts.timeout, () => theReq.destroy(new Error('timeout')));
+        const response = new Promise<A.IRequestResult>((resolve, reject) => {
 
             theReq.on('response', (resp: $H1.IncomingMessage) => {
 
@@ -84,5 +66,40 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
                 reject(e);
             });
         });
+
+        /**
+         * The request can fail before this method returns the response promise.
+         * Observe that rejection immediately while preserving it for the caller.
+         */
+        void response.catch(() => undefined);
+
+        theReq.setTimeout(opts.timeout, () => theReq.destroy(new Error('timeout')));
+
+        if (hasReqEntity) {
+
+            if (opts.data instanceof Readable) {
+
+                try {
+
+                    await pipeline(opts.data, theReq);
+                }
+                catch (e) {
+
+                    throw new E.E_NETWORK_FAILED({}, e);
+                }
+            }
+            else {
+
+                theReq.end(opts.data);
+            }
+
+            delete opts.data;
+        }
+        else {
+
+            theReq.end();
+        }
+
+        return response;
     }
 }
