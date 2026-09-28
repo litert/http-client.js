@@ -170,7 +170,9 @@ class HttpClient implements C.IClient {
 
                     if (this._kvCache.get(key) === k) {
 
-                        return this._wrapResponse(this._clients.h2s.request(opts, undefined, key));
+                        return this._wrapResponse(
+                            this._clients[k].request(opts, undefined, key)
+                        );
                     }
                 }
 
@@ -209,7 +211,6 @@ class HttpClient implements C.IClient {
             port: opts.url.port,
             servername: opts.url.hostname,
             minVersion: `TLSv${opts.minTLSVersion}` as any,
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             ALPNProtocols: ['h2', 'http/1.1']
         };
 
@@ -241,7 +242,7 @@ class HttpClient implements C.IClient {
                     case false:
                     case 'http/1.1': {
 
-                        const key: string = this._clients.h2s.getAuthorityKey(opts);
+                        const key: string = this._clients.h1s.getAuthorityKey(opts);
 
                         this._kvCache.set(key, 'h1s');
 

@@ -5,6 +5,9 @@
 - chore: upgraded dev-dependencies
 - fix(client): correctly process the input stream when failing to send request bodies.
 - fix(client): support AbortSignal with E_ABORTED and enforce HTTP/2 connection pool limits.
+- fix(client): report secure response protocols and cache both ALPN outcomes correctly.
+- fix(client): reject early-closed HTTP/2 streams and exclude destroyed sessions from reuse.
+- test(client): add shared loopback fixtures and protocol baseline coverage.
 
 ## v1.1.2
 

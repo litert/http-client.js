@@ -1,7 +1,6 @@
 /* eslint-disable */
 
 import * as NodeAssert from 'node:assert';
-import * as NodeEvents from 'node:events';
 import * as NodeHttp from 'node:http';
 import * as NodeHttp2 from 'node:http2';
 import { Readable, Writable } from 'node:stream';
@@ -10,11 +9,12 @@ import * as Http from '../lib';
 import { AbstractHttp1Client } from '../lib/Internal/AbstractHttp1Client';
 import { AbstractHttp2Client } from '../lib/Internal/AbstractHttp2Client';
 import { HttpHelper } from '../lib/Internal/Helper';
+import {
+    LOOPBACK_ADDRESS,
+    TestServer
+} from './TestServer';
 
-const LOOPBACK_ADDRESS = '127.0.0.1';
 const REQUEST_TIMEOUT = 1_000;
-
-type ITestServer = NodeHttp.Server | NodeHttp2.Http2Server;
 
 interface IFakeConnection {
 
@@ -169,28 +169,6 @@ function createInternalOptions(
     };
 }
 
-async function listen(server: ITestServer): Promise<number> {
-
-    const listening = NodeEvents.once(server, 'listening');
-
-    server.listen(0, LOOPBACK_ADDRESS);
-    await listening;
-
-    const address = server.address();
-
-    NodeAssert.ok(address && typeof address !== 'string');
-
-    return address.port;
-}
-
-async function closeServer(server: ITestServer): Promise<void> {
-
-    const closed = NodeEvents.once(server, 'close');
-
-    server.close();
-    await closed;
-}
-
 function attachHttp1ServerGuards(server: NodeHttp.Server): void {
 
     server.on('request', (request) => {
@@ -251,17 +229,17 @@ NodeTest.describe('Request body stream pipeline regression', {
 
             attachHttp1ServerGuards(server);
 
-            const port = await listen(server);
+            const testServer = await new TestServer(server).listen();
 
             testContext.after(async () => {
 
                 client.close();
-                await closeServer(server);
+                await testServer.close();
             });
 
             await NodeAssert.rejects(client.request({
                 'method': 'POST',
-                'url': `http://${LOOPBACK_ADDRESS}:${port}/`,
+                'url': testServer.url('http'),
                 'headers': {
                     [Http.Headers.CONTENT_LENGTH_H1]: 64
                 },
@@ -288,17 +266,17 @@ NodeTest.describe('Request body stream pipeline regression', {
 
             attachHttp2ServerGuards(server);
 
-            const port = await listen(server);
+            const testServer = await new TestServer(server).listen();
 
             testContext.after(async () => {
 
                 client.close();
-                await closeServer(server);
+                await testServer.close();
             });
 
             await NodeAssert.rejects(client.request({
                 'method': 'POST',
-                'url': `http://${LOOPBACK_ADDRESS}:${port}/`,
+                'url': testServer.url('http'),
                 'headers': {
                     [Http.Headers.CONTENT_LENGTH_H1]: 64
                 },

@@ -23,6 +23,7 @@ import * as E from '../Errors';
 import { addAbortSignal, Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import * as Pool from './Http2Pool';
+import * as Http2Response from './Http2Response';
 
 export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
@@ -116,7 +117,11 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
                 const conn = pool.connections[connId];
 
-                if (conn.concurrency < maximumConcurrency && !conn.connection.closed) {
+                if (
+                    conn.concurrency < maximumConcurrency &&
+                    !conn.connection.closed &&
+                    !conn.connection.destroyed
+                ) {
 
                     conn.concurrency++;
 
@@ -331,7 +336,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
             return;
         }
 
-        if (conn.connection.closed) {
+        if (conn.connection.closed || conn.connection.destroyed) {
 
             this._removeConnection(key, connId, pool);
         }
@@ -409,32 +414,11 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
                 signal
             });
 
-            const response = new Promise<A.IRequestResult>((resolve, reject) => {
-
-                req.on('response', (respHeaders) => {
-
-                    resolve({
-                        'protocol': opts.connectionOptions.createConnection ? C.EProtocol.HTTPS_2 : C.EProtocol.HTTP_2,
-                        'gzip': opts.gzip,
-                        'deflate': opts.deflate,
-                        'stream': req,
-                        'headers': respHeaders as any,
-                        'statusCode': parseInt(respHeaders[$H2.constants.HTTP2_HEADER_STATUS] as string),
-                        'contentLength': respHeaders[$H2.constants.HTTP2_HEADER_CONTENT_LENGTH] === undefined ?
-                            Infinity : parseInt(respHeaders[$H2.constants.HTTP2_HEADER_CONTENT_LENGTH] as string),
-                        'noEntity': !this._.hasEntity(opts.method),
-                    });
-
-                })
-                    .once('error', (e) => {
-
-                        req.removeAllListeners('error');
-                        req.removeAllListeners('response');
-                        req.removeAllListeners('close');
-                        releaseConnection();
-                        reject(e);
-                    })
-                    .on('close', releaseConnection);
+            const response = Http2Response.createResponsePromise({
+                'clientOptions': opts,
+                'helper': this._,
+                releaseConnection,
+                'request': req
             });
 
             /**

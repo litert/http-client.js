@@ -48,7 +48,8 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
                 }
 
                 resolve({
-                    'protocol': opts.connectionOptions.createConnection ? C.EProtocol.HTTPS_1 : C.EProtocol.HTTP_1,
+                    'protocol': opts.url.protocol === 'https' ?
+                        C.EProtocol.HTTPS_1 : C.EProtocol.HTTP_1,
                     'gzip': opts.gzip,
                     'deflate': opts.deflate,
                     'stream': resp,

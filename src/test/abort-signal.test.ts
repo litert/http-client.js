@@ -1,31 +1,25 @@
 /* eslint-disable */
 
 import * as NodeAssert from 'node:assert';
-import * as NodeEvents from 'node:events';
 import * as NodeHttp from 'node:http';
 import * as NodeHttp2 from 'node:http2';
 import * as NodeNet from 'node:net';
 import { Readable } from 'node:stream';
 import * as NodeTest from 'node:test';
 import * as Http from '../lib';
+import {
+    addTrackedResource,
+    createResourceTracker,
+    removeTrackedResource,
+    TestServer,
+    TEST_TIMEOUT as REQUEST_TIMEOUT,
+    waitForResourceCount
+} from './TestServer';
 
 const ABORT_CYCLES = 5;
 const CONNECTION_LIMIT = 2;
 const REQUESTS_PER_CYCLE = CONNECTION_LIMIT * 3;
-const REQUEST_TIMEOUT = 2_000;
-const LOOPBACK_ADDRESS = '127.0.0.1';
 const PROBE_BODY = 'ok';
-
-type ITestServer = NodeHttp.Server | NodeHttp2.Http2Server;
-
-interface IResourceTracker<T> {
-
-    active: Set<T>;
-
-    events: NodeEvents.EventEmitter;
-
-    peak: number;
-}
 
 interface IAbortBatch {
 
@@ -55,70 +49,6 @@ class PendingBody extends Readable {
         this._sent = true;
         this.push(Buffer.from('partial body'));
     }
-}
-
-function createResourceTracker<T>(): IResourceTracker<T> {
-
-    return {
-        'active': new Set<T>(),
-        'events': new NodeEvents.EventEmitter(),
-        'peak': 0
-    };
-}
-
-function addTrackedResource<T>(tracker: IResourceTracker<T>, resource: T): void {
-
-    tracker.active.add(resource);
-    tracker.peak = Math.max(tracker.peak, tracker.active.size);
-}
-
-function removeTrackedResource<T>(tracker: IResourceTracker<T>, resource: T): void {
-
-    tracker.active.delete(resource);
-
-    if (!tracker.active.size) {
-
-        tracker.events.emit('empty');
-    }
-}
-
-async function waitForEmpty<T>(tracker: IResourceTracker<T>): Promise<void> {
-
-    if (!tracker.active.size) {
-
-        return;
-    }
-
-    await NodeEvents.once(tracker.events, 'empty', {
-        'signal': AbortSignal.timeout(REQUEST_TIMEOUT)
-    });
-}
-
-async function listen(server: ITestServer): Promise<number> {
-
-    const listening = NodeEvents.once(server, 'listening');
-
-    server.listen(0, LOOPBACK_ADDRESS);
-    await listening;
-
-    const address = server.address();
-
-    NodeAssert.ok(address && typeof address !== 'string');
-
-    return address.port;
-}
-
-async function closeServer(server: ITestServer): Promise<void> {
-
-    if (!server.listening) {
-
-        return;
-    }
-
-    const closed = NodeEvents.once(server, 'close');
-
-    server.close();
-    await closed;
 }
 
 function waitForHttp1Requests(
@@ -330,12 +260,12 @@ NodeTest.describe('AbortSignal connection pool recovery', {
             });
             server.on('clientError', (_error, socket) => socket.destroy());
 
-            const port = await listen(server);
+            const testServer = await new TestServer(server).listen();
 
             testContext.after(async () => {
 
                 client.close();
-                await closeServer(server);
+                await testServer.close();
             });
 
             for (let cycle = 0; cycle < ABORT_CYCLES; cycle++) {
@@ -343,7 +273,7 @@ NodeTest.describe('AbortSignal connection pool recovery', {
                 const filled = waitForHttp1Requests(server, CONNECTION_LIMIT);
                 const batch = createAbortBatch(
                     client,
-                    `http://${LOOPBACK_ADDRESS}:${port}/hold`,
+                    testServer.url('http', '/hold'),
                     Http.EVersion.HTTP_1_1,
                     CONNECTION_LIMIT
                 );
@@ -354,14 +284,32 @@ NodeTest.describe('AbortSignal connection pool recovery', {
 
                 await assertProbe(
                     client,
-                    `http://${LOOPBACK_ADDRESS}:${port}/probe`,
+                    testServer.url('http', '/probe'),
                     Http.EVersion.HTTP_1_1,
                     CONNECTION_LIMIT
                 );
             }
 
+            const waiting = waitForHttp1Requests(server, 1);
+            const controller = new AbortController();
+            const pending = client.request({
+                'method': 'GET',
+                'url': testServer.url('http', '/hold'),
+                'version': Http.EVersion.HTTP_1_1,
+                'maxConnections': CONNECTION_LIMIT,
+                'concurrency': CONNECTION_LIMIT,
+                'signal': controller.signal
+            });
+
+            await waiting;
+            controller.abort(new Error('Cancel while waiting for HTTP/1.1.'));
+            await NodeAssert.rejects(
+                pending,
+                (error: unknown): boolean => error instanceof Http.E_ABORTED
+            );
+
             client.close();
-            await waitForEmpty(sockets);
+            await waitForResourceCount(sockets, 0);
             NodeAssert.strictEqual(sockets.active.size, 0);
         }
     );
@@ -406,12 +354,12 @@ NodeTest.describe('AbortSignal connection pool recovery', {
                 }
             });
 
-            const port = await listen(server);
+            const testServer = await new TestServer(server).listen();
 
             testContext.after(async () => {
 
                 client.close();
-                await closeServer(server);
+                await testServer.close();
             });
 
             for (let cycle = 0; cycle < ABORT_CYCLES; cycle++) {
@@ -419,7 +367,7 @@ NodeTest.describe('AbortSignal connection pool recovery', {
                 const filled = waitForHttp2Streams(server, CONNECTION_LIMIT);
                 const batch = createAbortBatch(
                     client,
-                    `http://${LOOPBACK_ADDRESS}:${port}/hold`,
+                    testServer.url('http', '/hold'),
                     Http.EVersion.HTTP_2,
                     1
                 );
@@ -427,22 +375,41 @@ NodeTest.describe('AbortSignal connection pool recovery', {
                 await filled;
                 abortBatch(batch, cycle);
                 assertAborted(batch, await batch.settled);
-                await waitForEmpty(streams);
+                await waitForResourceCount(streams, 0);
 
                 await assertProbe(
                     client,
-                    `http://${LOOPBACK_ADDRESS}:${port}/probe`,
+                    testServer.url('http', '/probe'),
                     Http.EVersion.HTTP_2,
                     1
                 );
-                await waitForEmpty(streams);
+                await waitForResourceCount(streams, 0);
             }
+
+            const waiting = waitForHttp2Streams(server, 1);
+            const controller = new AbortController();
+            const pending = client.request({
+                'method': 'GET',
+                'url': testServer.url('http', '/hold'),
+                'version': Http.EVersion.HTTP_2,
+                'maxConnections': CONNECTION_LIMIT,
+                'concurrency': 1,
+                'signal': controller.signal
+            });
+
+            await waiting;
+            controller.abort(new Error('Cancel while waiting for HTTP/2.'));
+            await NodeAssert.rejects(
+                pending,
+                (error: unknown): boolean => error instanceof Http.E_ABORTED
+            );
+            await waitForResourceCount(streams, 0);
 
             NodeAssert.ok(sessions.peak <= CONNECTION_LIMIT);
             NodeAssert.ok(streams.peak <= CONNECTION_LIMIT);
 
             client.close();
-            await waitForEmpty(sessions);
+            await waitForResourceCount(sessions, 0);
         }
     );
 });
