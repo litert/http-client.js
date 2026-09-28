@@ -1,9 +1,10 @@
 # Changes Logs
 
-## v1.1.3
+## v1.2.0
 
 - chore: upgraded dev-dependencies
 - fix(client): correctly process the input stream when failing to send request bodies.
+- fix(client): support AbortSignal with E_ABORTED and enforce HTTP/2 connection pool limits.
 
 ## v1.1.2
 

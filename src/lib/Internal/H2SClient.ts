@@ -76,13 +76,19 @@ export class H2SClient extends AbstractHttp2Client implements A.IProtocolClient 
 
             const hash = $Crypto.createHash('md5');
 
-            hash.update(`${this._.getAuthority(opts.url)}/la:${opts.localAddress}/tls_v${opts.minTLSVersion}/ca:`);
+            hash.update(
+                `${this._.getAuthority(opts.url)}/la:${opts.localAddress}` +
+                `/tls_v${opts.minTLSVersion}/conns:${opts.maxConnections}` +
+                `/conc:${opts.concurrency}/ca:`
+            );
 
             hash.end(opts.ca);
 
             return hash.digest('base64');
         }
 
-        return `${this._.getAuthority(opts.url)}/la:${opts.localAddress}/tls_v${opts.minTLSVersion}`;
+        return `${this._.getAuthority(opts.url)}/la:${opts.localAddress}` +
+            `/tls_v${opts.minTLSVersion}/conns:${opts.maxConnections}` +
+            `/conc:${opts.concurrency}`;
     }
 }

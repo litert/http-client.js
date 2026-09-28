@@ -129,7 +129,8 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
         const req = $H1S.request({
             ...h1sOpts,
             ...opts.connectionOptions,
-            ...opts.requestOptions
+            ...opts.requestOptions,
+            'signal': this._getAbortSignal(opts),
         });
 
         if (tlsSocket) {

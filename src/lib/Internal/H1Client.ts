@@ -107,7 +107,8 @@ export class H1Client extends AbstractHttp1Client implements A.IProtocolClient {
             $H1.request({
                 ...h1Opts,
                 ...opts.connectionOptions,
-                ...opts.requestOptions
+                ...opts.requestOptions,
+                'signal': this._getAbortSignal(opts)
             }),
             opts,
             REQ_ENTITY

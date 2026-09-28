@@ -20,32 +20,15 @@ import * as $H2 from 'http2';
 import * as $H1 from 'http';
 import * as A from './Abstract';
 import * as E from '../Errors';
-import { Readable } from 'stream';
+import { addAbortSignal, Readable } from 'stream';
 import { pipeline } from 'stream/promises';
-
-interface IConnection {
-
-    concurrency: number;
-
-    connection: $H2.ClientHttp2Session;
-}
-
-interface ISiteConnectionPool {
-
-    maximum: number;
-
-    quantity: number;
-
-    connections: Record<string, IConnection>;
-}
-
-const INITIAL_CONN_ID_COUNTER = 0;
+import * as Pool from './Http2Pool';
 
 export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
-    private _connections: Record<string, ISiteConnectionPool>;
+    private readonly _connections: Record<string, Pool.ISiteConnectionPool>;
 
-    private _connIndex: number = INITIAL_CONN_ID_COUNTER;
+    private _connIndex: number = Pool.INITIAL_CONN_ID_COUNTER;
 
     public constructor(
         protected _: A.IHelper
@@ -107,89 +90,254 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
         opts: C.IRequestOptions,
         h2Opts: $H2.ClientSessionOptions | $H2.SecureClientSessionOptions,
         key: string
-    ): Promise<[string, IConnection]> {
+    ): Promise<[string, Pool.IConnection]> {
 
-        let pool = this._connections[key];
+        const signal = this._getAbortSignal(opts);
 
-        if (pool) {
+        while (true) {
 
-            if (pool.quantity) {
+            if (signal?.aborted) {
 
-                for (const k in pool.connections) {
+                throw this._createAbortError(signal);
+            }
 
-                    const conn = pool.connections[k];
+            const pool = this._connections[key] ??= {
+                'connections': {},
+                'maximum': opts.maxConnections > 0 ?
+                    opts.maxConnections : Pool.MINIMUM_CONNECTION_LIMIT,
+                'pending': 0,
+                'quantity': 0,
+                'waiters': new Set()
+            };
+            const maximumConcurrency = opts.concurrency > 0 ?
+                opts.concurrency : Pool.MINIMUM_CONNECTION_LIMIT;
 
-                    if (conn.concurrency < opts.concurrency && !conn.connection.closed) {
+            for (const connId in pool.connections) {
 
-                        conn.concurrency++;
+                const conn = pool.connections[connId];
 
-                        return [k, conn];
-                    }
+                if (conn.concurrency < maximumConcurrency && !conn.connection.closed) {
+
+                    conn.concurrency++;
+
+                    return [connId, conn];
                 }
             }
-        }
-        else {
 
-            pool = this._connections[key] = {
-                'connections': {},
-                'quantity': 0,
-                'maximum': opts.maxConnections
+            if (pool.quantity + pool.pending < pool.maximum) {
+
+                return this._createConnection({
+                    'clientOptions': opts,
+                    'connectionOptions': h2Opts,
+                    key,
+                    pool,
+                    signal
+                });
+            }
+
+            await this._waitForConnection(pool, signal);
+        }
+    }
+
+    private _createConnection(
+        opts: Pool.IConnectionCreationOptions
+    ): Promise<[string, Pool.IConnection]> {
+
+        opts.pool.pending++;
+
+        return new Promise((resolve, reject) => {
+
+            const session = $H2.connect(
+                this._.getAuthority(opts.clientOptions.url),
+                opts.connectionOptions
+            );
+            let completed = false;
+            let onAbort: (() => void) | null = null;
+
+            const cleanup = (): void => {
+
+                if (onAbort) {
+
+                    opts.signal?.removeEventListener('abort', onAbort);
+                }
             };
+
+            const rejectConnection = (error: unknown): void => {
+
+                if (completed) {
+
+                    return;
+                }
+
+                completed = true;
+                cleanup();
+                this._completePendingConnection(opts.key, opts.pool);
+                session.destroy();
+                reject(error);
+            };
+
+            onAbort = (): void => {
+
+                rejectConnection(this._createAbortError(opts.signal!));
+            };
+
+            opts.signal?.addEventListener('abort', onAbort, { 'once': true });
+
+            session.once('connect', () => {
+
+                if (completed) {
+
+                    return;
+                }
+
+                completed = true;
+                cleanup();
+
+                const connId = `${this._connIndex++}`;
+                const conn: Pool.IConnection = {
+                    'concurrency': 1,
+                    'connection': session
+                };
+
+                opts.pool.quantity++;
+                opts.pool.connections[connId] = conn;
+
+                session.on('close', () => {
+
+                    this._removeConnection(opts.key, connId, opts.pool);
+                });
+
+                session.removeListener('error', rejectConnection);
+                session.on('error', () => {
+
+                    /**
+                     * Stream errors are reported to their request promises.
+                     * Destroy the failed session while preventing an uncaught event.
+                     */
+                    session.destroy();
+                });
+
+                this._completePendingConnection(opts.key, opts.pool);
+                resolve([connId, conn]);
+
+            }).once('error', rejectConnection);
+        });
+    }
+
+    private _waitForConnection(
+        pool: Pool.ISiteConnectionPool,
+        signal?: AbortSignal
+    ): Promise<void> {
+
+        if (signal?.aborted) {
+
+            return Promise.reject(this._createAbortError(signal));
         }
 
         return new Promise((resolve, reject) => {
 
-            const session = $H2.connect(this._.getAuthority(opts.url), h2Opts);
+            let completed = false;
+            let onAbort: (() => void) | null = null;
 
-            session.once('connect', () => {
+            const resume = (): void => {
 
-                const connId = this._connIndex++;
+                if (completed) {
 
-                pool.quantity++;
-                pool.connections[connId] = {
-                    concurrency: 1,
-                    connection: session
-                };
+                    return;
+                }
 
-                session.on('close', () => {
+                completed = true;
 
-                    pool.quantity--;
+                if (onAbort) {
 
-                    delete pool.connections[connId];
+                    signal?.removeEventListener('abort', onAbort);
+                }
 
-                    if (!pool.quantity) {
+                resolve();
+            };
 
-                        delete this._connections[key];
-                    }
-                });
+            onAbort = (): void => {
 
-                session.removeAllListeners('error');
+                if (completed) {
 
-                resolve([connId as any, pool.connections[connId]]);
+                    return;
+                }
 
-            }).once('error', reject);
+                completed = true;
+                pool.waiters.delete(resume);
+                reject(this._createAbortError(signal!));
+            };
+
+            pool.waiters.add(resume);
+            signal?.addEventListener('abort', onAbort, { 'once': true });
         });
     }
 
-    private _releaseConnection(key: string, connId: string, conn: IConnection): void {
+    private _completePendingConnection(
+        key: string,
+        pool: Pool.ISiteConnectionPool
+    ): void {
 
-        conn.concurrency--;
+        pool.pending--;
+        Pool.wakeConnectionWaiters(pool);
+        this._pruneConnectionPool(key, pool);
+    }
+
+    private _removeConnection(
+        key: string,
+        connId: string,
+        pool: Pool.ISiteConnectionPool
+    ): void {
+
+        if (this._connections[key] !== pool || !pool.connections[connId]) {
+
+            return;
+        }
+
+        delete pool.connections[connId];
+        pool.quantity--;
+
+        Pool.wakeConnectionWaiters(pool);
+        this._pruneConnectionPool(key, pool);
+    }
+
+    private _pruneConnectionPool(
+        key: string,
+        pool: Pool.ISiteConnectionPool
+    ): void {
+
+        if (this._connections[key] === pool &&
+            !pool.quantity && !pool.pending && !pool.waiters.size) {
+
+            delete this._connections[key];
+        }
+    }
+
+    private _releaseConnection(
+        key: string,
+        connId: string,
+        conn: Pool.IConnection
+    ): void {
+
+        if (conn.concurrency > 0) {
+
+            conn.concurrency--;
+        }
+
+        const pool = this._connections[key];
+
+        if (pool?.connections[connId] !== conn) {
+
+            return;
+        }
 
         if (conn.connection.closed) {
 
-            const pool = this._connections[key];
+            this._removeConnection(key, connId, pool);
+        }
+        else {
 
-            if (pool) {
-
-                delete pool.connections[connId];
-
-                pool.quantity--;
-
-                if (!pool.quantity) {
-
-                    delete this._connections[key];
-                }
-            }
+            Pool.wakeConnectionWaiters(pool);
         }
     }
 
@@ -201,6 +349,13 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
         opts: C.IRequestOptions,
         key: string = this.getAuthorityKey(opts)
     ): Promise<A.IRequestResult> {
+
+        const signal = this._getAbortSignal(opts);
+
+        if (signal && opts.data instanceof Readable) {
+
+            addAbortSignal(signal, opts.data);
+        }
 
         const headers: $H1.OutgoingHttpHeaders = {
             ...this._preprocessHeaders(opts.headers),
@@ -249,7 +404,10 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
                 headers[$H2.constants.HTTP2_HEADER_CONTENT_LENGTH] = opts.headers[C.Headers.CONTENT_LENGTH_H1];
             }
 
-            const req = conn.connection.request(headers, opts.requestOptions);
+            const req = conn.connection.request(headers, {
+                ...opts.requestOptions,
+                signal
+            });
 
             const response = new Promise<A.IRequestResult>((resolve, reject) => {
 
@@ -300,6 +458,11 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
                     }
                     catch (e) {
 
+                        if (signal && this._isAbortError(opts, e)) {
+
+                            throw this._createAbortError(signal, e);
+                        }
+
                         throw new E.E_NETWORK_FAILED({}, e);
                     }
                 }
@@ -324,6 +487,11 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
         catch (e) {
 
             releaseConnection();
+
+            if (signal && this._isAbortError(opts, e)) {
+
+                throw this._createAbortError(signal, e);
+            }
 
             throw e;
         }

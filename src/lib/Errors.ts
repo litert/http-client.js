@@ -96,6 +96,16 @@ export const E_NO_RESPONSE_ENTITY = class extends AbstractHttpClientError {
     public static override message = 'The response entity is empty.';
 };
 
+/**
+ * The request was canceled through its AbortSignal.
+ */
+export const E_ABORTED = class extends AbstractHttpClientError {
+
+    public static override id = 'aborted';
+
+    public static override message = 'The request was aborted.';
+};
+
 export const E_NETWORK_FAILED = class extends AbstractHttpClientError {
 
     public static override id = 'network_failed';

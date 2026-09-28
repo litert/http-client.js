@@ -94,6 +94,11 @@ export interface IRequestOptions {
     data?: Buffer | string | Readable;
 
     /**
+     * A signal that aborts the request and any pending connection acquisition.
+     */
+    signal?: AbortSignal;
+
+    /**
      * The version of HTTP protocol to be used.
      *
      * Set to `0` to make it detect protocol automatically, while using HTTPS.

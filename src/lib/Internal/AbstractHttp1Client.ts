@@ -37,6 +37,7 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
         hasReqEntity: boolean
     ): Promise<A.IRequestResult> {
 
+        const signal = this._getAbortSignal(opts);
         const response = new Promise<A.IRequestResult>((resolve, reject) => {
 
             theReq.on('response', (resp: $H1.IncomingMessage) => {
@@ -85,6 +86,11 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
                 }
                 catch (e) {
 
+                    if (signal && this._isAbortError(opts, e)) {
+
+                        throw this._createAbortError(signal, e);
+                    }
+
                     throw new E.E_NETWORK_FAILED({}, e);
                 }
             }
@@ -100,6 +106,18 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
             theReq.end();
         }
 
-        return response;
+        try {
+
+            return await response;
+        }
+        catch (e) {
+
+            if (signal && this._isAbortError(opts, e)) {
+
+                throw this._createAbortError(signal, e);
+            }
+
+            throw e;
+        }
     }
 }

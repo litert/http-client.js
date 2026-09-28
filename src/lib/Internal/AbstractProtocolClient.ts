@@ -19,6 +19,25 @@ import * as E from '../Errors';
 
 export abstract class AbstractProtocolClient {
 
+    protected _getAbortSignal(opts: C.IRequestOptions): AbortSignal | undefined {
+
+        return opts.signal ?? opts.requestOptions['signal'];
+    }
+
+    protected _createAbortError(
+        signal: AbortSignal,
+        origin: unknown = signal.reason
+    ): E.AbstractHttpClientError {
+
+        return new E.E_ABORTED({}, origin);
+    }
+
+    protected _isAbortError(opts: C.IRequestOptions, error: unknown): boolean {
+
+        return this._getAbortSignal(opts)?.aborted === true &&
+            error instanceof Error && error.name === 'AbortError';
+    }
+
     /**
      * Validate the type of request entity and calculate the length of it.
      *

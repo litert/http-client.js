@@ -105,6 +105,7 @@ class HttpClient implements C.IClient {
             'authentication': _default(optsIn, 'authentication', { type: 'none' }),
             'minTLSVersion': _default(optsIn, 'minTLSVersion', C.ETlsVersion.TLS_V1),
             'data': _default(optsIn, 'data', ''),
+            'signal': optsIn.signal ?? optsIn.requestOptions?.['signal'],
             'localAddress': _default(optsIn, 'localAddress', ''),
             'timeout': _default(optsIn, 'timeout', C.DEFAULT_TIMEOUT),
             'keepAlive': _default(optsIn, 'keepAlive', true),

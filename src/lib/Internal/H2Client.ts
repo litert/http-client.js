@@ -48,6 +48,7 @@ export class H2Client extends AbstractHttp2Client implements A.IProtocolClient {
 
     public getAuthorityKey(opts: C.IRequestOptions): string {
 
-        return `${this._.getAuthority(opts.url)}/la:${opts.localAddress}`;
+        return `${this._.getAuthority(opts.url)}/la:${opts.localAddress}` +
+            `/conns:${opts.maxConnections}/conc:${opts.concurrency}`;
     }
 }
