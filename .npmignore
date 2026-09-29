@@ -12,9 +12,12 @@
 /test-data/
 /*.sh
 /commitlint.config.js
-/.eslintrc
-/.eslintignore
+/eslint.config.js
 /.husky/
 /.agents/
 /.ai/
 /AGENTS.md
+/.codex/
+test/
+/utils/
+.aiignore
