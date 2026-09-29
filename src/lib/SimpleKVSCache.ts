@@ -62,6 +62,29 @@ class SimpleKVSCache implements C.IKeyValueCache {
     }
 }
 
+/**
+ * Create an in-memory key-value cache with a fixed entry lifetime.
+ *
+ * The lifetime starts again whenever a key is set. A missing or expired key
+ * returns `null`, and expired entries are deleted lazily when read. A lifetime
+ * of zero or less therefore makes an entry expire by its next read.
+ *
+ * @param ttl The entry lifetime, in milliseconds.
+ * @returns A new independent key-value cache.
+ *
+ * @example
+ * ```ts
+ * import { createSimpleKVSCache } from '@litert/http-client';
+ *
+ * const cache = createSimpleKVSCache(30_000);
+ *
+ * cache.set('protocol', 'h2');
+ * console.log(cache.get('protocol')); // 'h2'
+ *
+ * cache.remove('protocol');
+ * console.log(cache.get('protocol')); // null
+ * ```
+ */
 export function createSimpleKVSCache(ttl: number): C.IKeyValueCache {
 
     return new SimpleKVSCache(ttl);

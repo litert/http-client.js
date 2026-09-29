@@ -449,6 +449,40 @@ class HttpClient implements C.IClient {
     }
 }
 
+/**
+ * Create an HTTP client that supports HTTP/1.1, HTTPS, and HTTP/2 requests.
+ *
+ * Each call creates an independent client. When an option is omitted, the
+ * client creates its own asynchronous filter manager and a protocol-detection
+ * cache with a 60-second lifetime. Call `client.close()` when the client is no
+ * longer needed to release its keep-alive connections.
+ *
+ * Library-defined request failures reject with an exported
+ * `AbstractHttpClientError` subclass. Native transport errors can also
+ * propagate when no library-specific error applies.
+ *
+ * @param opts Optional client collaborators.
+ * @returns A new HTTP client.
+ * @default {}
+ *
+ * @example
+ * ```ts
+ * import { createHttpClient } from '@litert/http-client';
+ *
+ * const client = createHttpClient();
+ *
+ * try {
+ *     const response = await client.request({
+ *         method: 'GET',
+ *         url: 'https://example.com/'
+ *     });
+ *     console.log(response.statusCode, await response.getBuffer());
+ * }
+ * finally {
+ *     client.close();
+ * }
+ * ```
+ */
 export function createHttpClient(opts?: Partial<C.IClientOptions>): C.IClient {
 
     return new HttpClient(opts);

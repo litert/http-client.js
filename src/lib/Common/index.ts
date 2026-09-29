@@ -20,4 +20,25 @@ export * from './Request';
 export * from './Response';
 import * as Headers from './Headers';
 
-export { Headers };
+export {
+    /**
+     * Standard lowercase HTTP header names and HTTP/2 pseudo-header names.
+     *
+     * Use these constants instead of repeating protocol header strings in
+     * request options or response lookups.
+     *
+     * @example
+     * ```ts
+     * import {
+     *     Headers,
+     *     type TRequestHeaders,
+     * } from '@litert/http-client';
+     *
+     * const headers: TRequestHeaders = {
+     *     [Headers.ACCEPT]: 'application/json',
+     *     [Headers.ACCEPT_LANGUAGE]: 'en-US',
+     * };
+     * ```
+     */
+    Headers
+};

@@ -18,6 +18,55 @@ import * as C from '../Common';
 import * as E from '../Errors';
 import type * as Filters from '../Filters';
 
+/**
+ * Create a request preprocessor for HTTP Basic Authentication.
+ *
+ * Register the returned callback on a client's `pre_request` filter. For a
+ * request whose authentication type is `Basic` (case-insensitive), the
+ * callback encodes the username and password and sets the `authorization`
+ * header. Requests using another authentication type pass through unchanged.
+ *
+ * Basic credentials are only encoded, not encrypted. Send them only over
+ * HTTPS.
+ *
+ * @returns An asynchronous `pre_request` filter callback.
+ * @throws The returned callback rejects with `E_EMPTY_AUTH_CREDENTIALS` when
+ * a matching request has an empty username.
+ *
+ * @example
+ * ```ts
+ * import {
+ *     createBasicPreprocessor,
+ *     createHttpClient,
+ *     type IBasicAuthentication
+ * } from '@litert/http-client';
+ *
+ * const client = createHttpClient();
+ * const authentication: IBasicAuthentication = {
+ *     type: 'Basic',
+ *     username: 'api-user',
+ *     password: 'example-password'
+ * };
+ *
+ * client.filters.register({
+ *     name: 'pre_request',
+ *     key: 'basic-authentication',
+ *     callback: createBasicPreprocessor()
+ * });
+ *
+ * try {
+ *     const response = await client.request({
+ *         method: 'GET',
+ *         url: 'https://api.example.com/profile',
+ *         authentication
+ *     });
+ *     response.abort();
+ * }
+ * finally {
+ *     client.close();
+ * }
+ * ```
+ */
 export function createBasicPreprocessor(): Filters.IAsyncFilterCallback<C.IFilters['pre_request']> {
 
     // eslint-disable-next-line @typescript-eslint/require-await
