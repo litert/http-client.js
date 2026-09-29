@@ -8,6 +8,13 @@
 - fix(client): report secure response protocols and cache both ALPN outcomes correctly.
 - fix(client): reject early-closed HTTP/2 streams and exclude destroyed sessions from reuse.
 - test(client): add shared loopback fixtures and protocol baseline coverage.
+- fix(client): normalize URLs without mutating request input and format authorities with non-default ports.
+- fix(client): use typed request timeouts and release HTTP/1.1 and HTTP/2 capacity after abandoned responses.
+- fix(client): reuse ALPN-negotiated HTTP/2 sockets and support aborting protocol negotiation.
+- fix(client): isolate transport pools by physical destination and compatible capacity settings.
+- fix(filters): await promise-compatible callbacks and preserve symbol-based registrations.
+- fix(cache): support prototype-like keys and immediate expiration safely.
+- test(client): cover dispatch, normalization, timeouts, response lifecycles, filters, and cache behavior.
 
 ## v1.1.2
 

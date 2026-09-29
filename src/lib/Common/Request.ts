@@ -82,9 +82,7 @@ export interface IRequestOptions {
     /**
      * The minimum version of TLS could be used.
      *
-     * If no limitation, set to `false`.
-     *
-     * @default 1.1
+     * @default 1.0
      */
     minTLSVersion: ETlsVersion;
 
@@ -105,7 +103,7 @@ export interface IRequestOptions {
      *
      * If use `0` for plain HTTP, then `HTTP/1.1` will be used.
      *
-     * @default 2.0 for HTTPS and 1.1 for plain HTTP
+     * @default 1.1
      */
     version: B.EVersion;
 
@@ -133,7 +131,7 @@ export interface IRequestOptions {
     /**
      * The maximum number of requests for each site at the same time.
      *
-     * For HTTP/1.1, this value will overwrite `maxConnection` due to
+     * For HTTP/1.1, this value determines the agent socket limit when set.
      *
      * @default Infinity
      */
@@ -149,7 +147,7 @@ export interface IRequestOptions {
     /**
      * How long could a connection last for keep-alive.
      *
-     * @default 30000
+     * @default 60000
      */
     keepAliveTimeout: number;
 

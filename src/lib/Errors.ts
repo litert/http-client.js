@@ -41,13 +41,15 @@ export abstract class AbstractHttpClientError extends Error {
 
         super();
 
-        this.name = (this as any).constructor.id;
-        this.message = (this as any).constructor.message;
+        const errorType = this.constructor as typeof AbstractHttpClientError;
 
-        if ((this as any).constructor.context) {
+        this.name = errorType.id;
+        this.message = errorType.message;
+
+        if (errorType.context) {
 
             this.context = {
-                ...(this as any).constructor.context,
+                ...errorType.context,
                 ...context,
             };
         }
@@ -82,6 +84,16 @@ export const E_PROTOCOL_NOT_SUPPORTED = class extends AbstractHttpClientError {
     public static override message = 'The protocol is not supported.';
 };
 
+/**
+ * The request URL cannot be parsed as an absolute URL.
+ */
+export const E_INVALID_URL = class extends AbstractHttpClientError {
+
+    public static override id = 'invalid_url';
+
+    public static override message = 'The request URL is invalid.';
+};
+
 export const E_TOO_LARGE_RESPONSE_ENTITY = class extends AbstractHttpClientError {
 
     public static override id = 'too_large_response_entity';
@@ -104,6 +116,16 @@ export const E_ABORTED = class extends AbstractHttpClientError {
     public static override id = 'aborted';
 
     public static override message = 'The request was aborted.';
+};
+
+/**
+ * The request exceeded its inactivity timeout.
+ */
+export const E_REQUEST_TIMEOUT = class extends AbstractHttpClientError {
+
+    public static override id = 'request_timeout';
+
+    public static override message = 'The request timed out.';
 };
 
 export const E_NETWORK_FAILED = class extends AbstractHttpClientError {

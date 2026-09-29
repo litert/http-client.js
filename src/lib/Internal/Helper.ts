@@ -41,13 +41,7 @@ export class HttpHelper implements A.IHelper {
      */
     public hasEntity(method: C.TMethod): boolean {
 
-        switch (method) {
-            case 'HEAD':
-            case 'TRACE':
-                return false;
-            default:
-                return true;
-        }
+        return method !== 'HEAD';
     }
 
     public buildPath(url: C.IUrl): string {
@@ -56,7 +50,12 @@ export class HttpHelper implements A.IHelper {
 
         if (url.query) {
 
-            ret += `?${$QS.stringify(url.query)}`;
+            const query = $QS.stringify(url.query);
+
+            if (query) {
+
+                ret += `?${query}`;
+            }
         }
 
         return ret;
@@ -65,5 +64,15 @@ export class HttpHelper implements A.IHelper {
     public getAuthority(url: C.IUrl): string {
 
         return `${url.protocol}://${url.hostname}:${url.port!}`.toLowerCase();
+    }
+
+    public getRequestAuthority(url: C.IUrl): string {
+
+        const defaultPort = url.protocol === 'https' ?
+            C.DEFAULT_HTTPS_PORT : C.DEFAULT_HTTP_PORT;
+        const port = url.port ?? defaultPort;
+
+        return port === defaultPort ? url.hostname :
+            `${url.hostname}:${port}`;
     }
 }

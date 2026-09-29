@@ -34,7 +34,7 @@ const HTTP_STATUS_CODE_SERVER_ERROR_MAX = 599;
 const HTTP_STATUS_CODE_CONTINUE = 100;
 const HTTP_STATUS_CODE_UPGRADE = 101;
 
-const EMPTY_BUFFER = Buffer.allocUnsafe(0);
+const EMPTY_BUFFER = Buffer.alloc(0);
 
 export class HttpClientResponse implements C.IResponse {
 
@@ -59,16 +59,7 @@ export class HttpClientResponse implements C.IResponse {
 
     public abort(): void {
 
-        const s = this._stream as any;
-
-        if (s.close) {
-
-            s.close();
-        }
-        else {
-
-            s.destroy();
-        }
+        this._stream.destroy();
     }
 
     public get headers(): C.TResponseHeaders {
@@ -103,7 +94,14 @@ export class HttpClientResponse implements C.IResponse {
             return Promise.reject(this._error);
         }
 
-        if (maxLength <= 0 || this.contentLength <= 0 || this._noEntity) {
+        if (maxLength <= 0) {
+
+            this.abort();
+
+            return Promise.resolve(EMPTY_BUFFER);
+        }
+
+        if (this.contentLength <= 0 || !this._hasEntity()) {
 
             return Promise.resolve(EMPTY_BUFFER);
         }
@@ -125,46 +123,62 @@ export class HttpClientResponse implements C.IResponse {
                 stream = resp.pipe($zlib.createInflate());
             }
 
-            stream.on('data', (maxLength && maxLength !== Infinity) ? (function() {
+            let length = 0;
+            let onData: (chunk: Buffer) => void;
+            let onEnd: () => void;
+            let onError: (error: Error) => void;
 
-                let length = 0;
+            const cleanup = (): void => {
 
-                return function(chunk: Buffer): void {
+                stream.removeListener('data', onData);
+                stream.removeListener('end', onEnd);
+                stream.removeListener('error', onError);
 
-                    length += chunk.byteLength;
+                if (stream !== resp) {
 
-                    if (length > maxLength) {
+                    resp.removeListener('error', onError);
+                }
+            };
+            onError = (error: Error): void => {
 
-                        stream.removeAllListeners('error');
-                        stream.removeAllListeners('data');
-                        stream.removeAllListeners('end');
+                cleanup();
+                reject(error);
+            };
+            onEnd = (): void => {
 
-                        if (stream !== resp) {
+                cleanup();
+                resolve(Buffer.concat(data));
+            };
+            onData = (chunk: Buffer): void => {
 
-                            resp.removeAllListeners('error');
-                        }
+                length += chunk.byteLength;
+
+                if (maxLength !== Infinity && length > maxLength) {
+
+                    cleanup();
+                    stream.destroy();
+
+                    if (stream !== resp) {
 
                         resp.destroy();
-
-                        reject(new E.E_TOO_LARGE_RESPONSE_ENTITY()); return;
                     }
 
-                    data.push(chunk);
-                };
-
-            })() : function(chunk: Buffer): void {
+                    reject(new E.E_TOO_LARGE_RESPONSE_ENTITY({
+                        'maxBytes': maxLength
+                    }));
+                    return;
+                }
 
                 data.push(chunk);
+            };
 
-            }).on('end', function() {
-
-                resolve(Buffer.concat(data));
-
-            }).once('error', reject);
+            stream.on('data', onData);
+            stream.once('end', onEnd);
+            stream.once('error', onError);
 
             if (stream !== resp) {
 
-                resp.once('error', reject);
+                resp.once('error', onError);
             }
         });
     }
@@ -181,7 +195,7 @@ export class HttpClientResponse implements C.IResponse {
             throw this._error;
         }
 
-        if (this._noEntity || this._statusCode === 204) {
+        if (!this._hasEntity()) {
 
             throw new E.E_NO_RESPONSE_ENTITY();
         }
@@ -212,7 +226,7 @@ export class HttpClientResponse implements C.IResponse {
             throw this._error;
         }
 
-        if (this._noEntity || this._statusCode === 204) {
+        if (!this._hasEntity()) {
 
             throw new E.E_NO_RESPONSE_ENTITY();
         }
@@ -252,5 +266,11 @@ export class HttpClientResponse implements C.IResponse {
     public isUpgrade(): boolean {
 
         return this._statusCode === HTTP_STATUS_CODE_UPGRADE;
+    }
+
+    private _hasEntity(): boolean {
+
+        return !this._noEntity && this._statusCode !== 204 &&
+            this._statusCode !== 304;
     }
 }

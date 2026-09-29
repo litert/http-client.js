@@ -15,13 +15,17 @@
  */
 
 import * as C from './Common';
-import * as $url from 'url';
 import * as $TLS from 'tls';
 import * as E from './Errors';
 import * as Filters from './Filters';
 import { createSimpleKVSCache } from './SimpleKVSCache';
 import * as I from './Internal';
 import { HttpHelper } from './Internal/Helper';
+
+interface ILocalTLSConnectionOptions extends $TLS.ConnectionOptions {
+
+    localAddress?: string;
+}
 
 class HttpClient implements C.IClient {
 
@@ -59,33 +63,13 @@ class HttpClient implements C.IClient {
 
     public async request(optsIn: C.IRequestOptionsInput): Promise<C.IResponse> {
 
-        /**
-         * Specify whether requires the entity of request or not.
-         */
-        const REQ_ENTITY: boolean = this._.requireEntity(optsIn.method);
+        optsIn = await this.filters.filter(
+            'pre_args',
+            this._cloneRequestInput(optsIn)
+        );
+        optsIn = this._cloneRequestInput(optsIn);
 
-        if (REQ_ENTITY && !optsIn.data) {
-
-            optsIn.data = '';
-        }
-
-        optsIn = await this.filters.filter('pre_args', optsIn);
-
-        if (typeof optsIn.url === 'string') {
-
-            const theURL = $url.parse(optsIn.url, true);
-
-            const isHTTPS = theURL.protocol === 'https:';
-
-            optsIn.url = {
-
-                protocol: isHTTPS ? 'https' : 'http',
-                hostname: theURL.hostname ?? 'localhost',
-                pathname: theURL.pathname ?? '/',
-                query: theURL.query as any ?? {},
-                port: theURL.port ? parseInt(theURL.port) : (isHTTPS ? C.DEFAULT_HTTPS_PORT : C.DEFAULT_HTTP_PORT)
-            };
-        }
+        const url = this._normalizeUrl(optsIn.url);
 
         // eslint-disable-next-line @typescript-eslint/naming-convention
         function _default<T, K extends keyof T>(
@@ -100,9 +84,11 @@ class HttpClient implements C.IClient {
         let opts: C.IRequestOptions = {
 
             'method': optsIn.method,
-            'url': optsIn.url,
-            'headers': _default(optsIn, 'headers', {}),
-            'authentication': _default(optsIn, 'authentication', { type: 'none' }),
+            url,
+            'headers': { ..._default(optsIn, 'headers', {}) },
+            'authentication': {
+                ..._default(optsIn, 'authentication', { type: 'none' })
+            },
             'minTLSVersion': _default(optsIn, 'minTLSVersion', C.ETlsVersion.TLS_V1),
             'data': _default(optsIn, 'data', ''),
             'signal': optsIn.signal ?? optsIn.requestOptions?.['signal'],
@@ -116,8 +102,10 @@ class HttpClient implements C.IClient {
             'ca': _default(optsIn, 'ca', ''),
             'gzip': _default(optsIn, 'gzip', true),
             'deflate': _default(optsIn, 'deflate', true),
-            'requestOptions': _default(optsIn, 'requestOptions', {}),
-            'connectionOptions': _default(optsIn, 'connectionOptions', {}),
+            'requestOptions': { ..._default(optsIn, 'requestOptions', {}) },
+            'connectionOptions': {
+                ..._default(optsIn, 'connectionOptions', {})
+            },
         };
 
         opts = await this.filters.filter('pre_request', opts);
@@ -153,6 +141,127 @@ class HttpClient implements C.IClient {
         }
 
         return this._request(opts);
+    }
+
+    private _cloneRequestInput(
+        opts: C.IRequestOptionsInput
+    ): C.IRequestOptionsInput {
+
+        const url = typeof opts.url === 'string' ? opts.url :
+            this._cloneUrl(opts.url);
+
+        return {
+            ...opts,
+            url,
+            'headers': opts.headers ? { ...opts.headers } : undefined,
+            'authentication': opts.authentication ? {
+                ...opts.authentication
+            } : undefined,
+            'requestOptions': opts.requestOptions ? {
+                ...opts.requestOptions
+            } : undefined,
+            'connectionOptions': opts.connectionOptions ? {
+                ...opts.connectionOptions
+            } : undefined
+        };
+    }
+
+    private _cloneQuery(query: NonNullable<C.IUrl['query']>): C.IUrl['query'] {
+
+        const cloned: NonNullable<C.IUrl['query']> = {};
+
+        for (const key in query) {
+
+            const value = query[key];
+
+            cloned[key] = Array.isArray(value) ? [...value] : value;
+        }
+
+        return cloned;
+    }
+
+    private _cloneUrl(url: C.IUrl): C.IUrl {
+
+        const cloned = { ...url };
+
+        if (url.query) {
+
+            cloned.query = this._cloneQuery(url.query);
+        }
+
+        return cloned;
+    }
+
+    private _normalizeUrl(input: string | C.IUrl): C.IUrl {
+
+        if (typeof input !== 'string') {
+
+            if (input.protocol !== 'http' && input.protocol !== 'https') {
+
+                throw new E.E_PROTOCOL_NOT_SUPPORTED();
+            }
+
+            const url = this._cloneUrl(input);
+
+            url.pathname ||= '/';
+            url.port ??= this._getDefaultPort(input.protocol);
+
+            return url;
+        }
+
+        let parsed: URL;
+
+        try {
+
+            parsed = new URL(input);
+        }
+        catch (error) {
+
+            throw new E.E_INVALID_URL({}, error);
+        }
+
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+
+            throw new E.E_PROTOCOL_NOT_SUPPORTED();
+        }
+
+        const protocol = parsed.protocol === 'https:' ? 'https' : 'http';
+        const query: NonNullable<C.IUrl['query']> = {};
+
+        for (const [key, value] of parsed.searchParams) {
+
+            const existing = query[key];
+
+            if (existing === undefined) {
+
+                query[key] = value;
+            }
+            else if (Array.isArray(existing)) {
+
+                existing.push(value);
+            }
+            else {
+
+                query[key] = [existing, value];
+            }
+        }
+
+        const port = parsed.port ? Number(parsed.port) :
+            this._getDefaultPort(protocol);
+
+        return {
+            protocol,
+            'hostname': parsed.hostname,
+            'pathname': parsed.pathname || '/',
+            'query': Object.keys(query).length ? query : undefined,
+            port
+        };
+    }
+
+    private _getDefaultPort(protocol: C.IUrl['protocol']): number {
+
+        return protocol === 'https' ? C.DEFAULT_HTTPS_PORT :
+            C.DEFAULT_HTTP_PORT;
     }
 
     private _request(opts: C.IRequestOptions): Promise<C.IResponse> {
@@ -206,17 +315,17 @@ class HttpClient implements C.IClient {
 
     protected async _autoDetectProtocol(opts: C.IRequestOptions): Promise<C.IResponse> {
 
-        const tlsOpts: $TLS.ConnectionOptions = {
+        const tlsOpts: ILocalTLSConnectionOptions = {
             host: opts.connectionOptions.remoteHost ?? opts.url.hostname,
             port: opts.url.port,
             servername: opts.url.hostname,
-            minVersion: `TLSv${opts.minTLSVersion}` as any,
+            minVersion: `TLSv${opts.minTLSVersion}` as $TLS.SecureVersion,
             ALPNProtocols: ['h2', 'http/1.1']
         };
 
         if (opts.localAddress) {
 
-            (tlsOpts as any).localAddress = opts.localAddress;
+            tlsOpts.localAddress = opts.localAddress;
         }
 
         if (opts.ca) {
@@ -231,12 +340,53 @@ class HttpClient implements C.IClient {
 
         return new Promise((resolve, reject) => {
 
-            const conn = $TLS.connect({
+            let completed = false;
+            let conn: $TLS.TLSSocket;
+            let onAbort: () => void;
+            let onError: (error: Error) => void;
+
+            const cleanup = (): void => {
+
+                conn.removeListener('error', onError);
+                opts.signal?.removeEventListener('abort', onAbort);
+            };
+            onError = (error: Error): void => {
+
+                if (completed) {
+
+                    return;
+                }
+
+                completed = true;
+                cleanup();
+                reject(error);
+            };
+            onAbort = (): void => {
+
+                if (completed) {
+
+                    return;
+                }
+
+                completed = true;
+                cleanup();
+                conn.destroy();
+                reject(new E.E_ABORTED({}, opts.signal?.reason));
+            };
+
+            conn = $TLS.connect({
                 ...tlsOpts,
                 ...opts.connectionOptions
             }, () => {
 
-                conn.removeAllListeners('error');
+                if (completed) {
+
+                    conn.destroy();
+                    return;
+                }
+
+                completed = true;
+                cleanup();
 
                 switch (conn.alpnProtocol) {
                     case false:
@@ -259,11 +409,9 @@ class HttpClient implements C.IClient {
 
                         this._kvCache.set(key, 'h2s');
 
-                        conn.destroy(); // Don't use the connection preventing from memory leak.
-
                         resolve(this._wrapResponse(this._clients.h2s.request(
                             opts,
-                            undefined,
+                            conn,
                             key
                         )));
                         break;
@@ -274,10 +422,13 @@ class HttpClient implements C.IClient {
                 }
             });
 
-            conn.once('error', (e) => {
+            conn.once('error', onError);
+            opts.signal?.addEventListener('abort', onAbort, { 'once': true });
 
-                reject(e);
-            });
+            if (opts.signal?.aborted) {
+
+                onAbort();
+            }
         });
     }
 

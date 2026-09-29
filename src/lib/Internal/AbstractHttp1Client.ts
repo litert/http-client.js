@@ -40,11 +40,13 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
         const signal = this._getAbortSignal(opts);
         const response = new Promise<A.IRequestResult>((resolve, reject) => {
 
-            theReq.on('response', (resp: $H1.IncomingMessage) => {
+            const onResponse = (resp: $H1.IncomingMessage): void => {
 
                 if (opts.timeout) {
 
-                    resp.setTimeout(opts.timeout, () => resp.destroy(new Error('timeout')));
+                    resp.setTimeout(opts.timeout, () => resp.destroy(
+                        new E.E_REQUEST_TIMEOUT({ 'phase': 'receiving' })
+                    ));
                 }
 
                 resolve({
@@ -53,20 +55,21 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
                     'gzip': opts.gzip,
                     'deflate': opts.deflate,
                     'stream': resp,
-                    'headers': resp.headers as any,
+                    'headers': resp.headers as C.TResponseHeaders,
                     'statusCode': resp.statusCode!,
                     'contentLength': resp.headers[C.Headers.CONTENT_LENGTH_H1] === undefined ?
                         Infinity : parseInt(resp.headers[C.Headers.CONTENT_LENGTH_H1] ),
                     'noEntity': !this._.hasEntity(opts.method),
                 });
+            };
+            const onError = (error: Error): void => {
 
-            }).once('error', (e) => {
+                theReq.removeListener('response', onResponse);
+                reject(error);
+            };
 
-                theReq.removeAllListeners('error');
-                theReq.removeAllListeners('response');
-                theReq.removeAllListeners('close');
-                reject(e);
-            });
+            theReq.on('response', onResponse);
+            theReq.once('error', onError);
         });
 
         /**
@@ -75,7 +78,9 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
          */
         void response.catch(() => undefined);
 
-        theReq.setTimeout(opts.timeout, () => theReq.destroy(new Error('timeout')));
+        theReq.setTimeout(opts.timeout, () => theReq.destroy(
+            new E.E_REQUEST_TIMEOUT({ 'phase': 'request' })
+        ));
 
         if (hasReqEntity) {
 
@@ -90,6 +95,11 @@ export abstract class AbstractHttp1Client extends AbstractProtocolClient {
                     if (signal && this._isAbortError(opts, e)) {
 
                         throw this._createAbortError(signal, e);
+                    }
+
+                    if (e instanceof E.E_REQUEST_TIMEOUT) {
+
+                        throw e;
                     }
 
                     throw new E.E_NETWORK_FAILED({}, e);

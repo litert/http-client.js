@@ -18,44 +18,51 @@ import * as C from './Common';
 
 interface ICachedItem {
 
-    value: any;
+    value: unknown;
 
     expiringAt: number;
 }
 
-export function createSimpleKVSCache(ttl: number): C.IKeyValueCache {
+class SimpleKVSCache implements C.IKeyValueCache {
 
-    const data: Record<string, ICachedItem> = {};
+    private readonly _data: Record<string, ICachedItem> = Object.create(null);
 
-    return {
-        get(key: string): any {
+    public constructor(private readonly _ttl: number) {}
 
-            const ret = data[key];
+    public get(key: string): unknown {
 
-            if (ret) {
+        const ret = this._data[key];
 
-                if (ret.expiringAt < Date.now()) {
+        if (ret) {
 
-                    delete data[key];
+            if (ret.expiringAt <= Date.now()) {
 
-                    return null;
-                }
+                delete this._data[key];
 
-                return ret.value;
+                return null;
             }
 
-            return null;
-        },
-        set(key: string, value: unknown): void {
-
-            data[key] = {
-                value,
-                expiringAt: Date.now() + ttl
-            };
-        },
-        remove(key: string): void {
-
-            delete data[key];
+            return ret.value;
         }
-    };
+
+        return null;
+    }
+
+    public set(key: string, value: unknown): void {
+
+        this._data[key] = {
+            value,
+            'expiringAt': Date.now() + this._ttl
+        };
+    }
+
+    public remove(key: string): void {
+
+        delete this._data[key];
+    }
+}
+
+export function createSimpleKVSCache(ttl: number): C.IKeyValueCache {
+
+    return new SimpleKVSCache(ttl);
 }

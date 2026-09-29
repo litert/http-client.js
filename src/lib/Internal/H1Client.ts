@@ -51,7 +51,7 @@ export class H1Client extends AbstractHttp1Client implements A.IProtocolClient {
         }
 
         return this._agents[key] = new $H1.Agent({
-            'maxSockets': opts.maxConnections,
+            'maxSockets': this._getConnectionLimit(opts),
             'keepAlive': opts.keepAlive,
             'keepAliveMsecs': opts.keepAliveTimeout,
             ...opts.connectionOptions
@@ -59,14 +59,6 @@ export class H1Client extends AbstractHttp1Client implements A.IProtocolClient {
     }
 
     public async request(opts: C.IRequestOptions): Promise<A.IRequestResult> {
-
-        if (opts.concurrency !== Infinity) {
-
-            /**
-             * Overwrite maxConnections when concurrency is set.
-             */
-            opts.maxConnections = opts.concurrency;
-        }
 
         const agent = this._getAgent(opts);
 
@@ -81,7 +73,7 @@ export class H1Client extends AbstractHttp1Client implements A.IProtocolClient {
         }
 
         if (!opts.headers['host']) {
-            opts.headers['host'] = opts.url.hostname;
+            opts.headers['host'] = this._.getRequestAuthority(opts.url);
         }
 
         const h1Opts: $H1.RequestOptions = {
@@ -117,6 +109,24 @@ export class H1Client extends AbstractHttp1Client implements A.IProtocolClient {
 
     public getAuthorityKey(opts: C.IRequestOptions): string {
 
-        return `${this._.getAuthority(opts.url)}/rh:${opts.connectionOptions.remoteHost ?? opts.url.hostname}/la:${opts.localAddress}/conns:${opts.maxConnections}`;
+        const remoteHost = opts.connectionOptions.remoteHost ??
+            opts.url.hostname;
+
+        return [
+            `${this._.getAuthority(opts.url)}`,
+            `rh:${remoteHost}`,
+            `la:${opts.localAddress}`,
+            `conns:${this._getConnectionLimit(opts)}`,
+            `ka:${opts.keepAlive}`,
+            `kat:${opts.keepAliveTimeout}`
+        ].join('/');
+    }
+
+    private _getConnectionLimit(opts: C.IRequestOptions): number {
+
+        const limit = opts.concurrency === Infinity ? opts.maxConnections :
+            opts.concurrency;
+
+        return limit > 0 ? limit : 1;
     }
 }

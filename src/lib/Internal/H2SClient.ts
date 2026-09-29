@@ -21,6 +21,12 @@ import * as A from './Abstract';
 import { AbstractHttp2Client } from './AbstractHttp2Client';
 import * as $Crypto from 'crypto';
 
+interface ILocalSecureClientSessionOptions
+    extends $H2.SecureClientSessionOptions {
+
+    localAddress?: string;
+}
+
 export class H2SClient extends AbstractHttp2Client implements A.IProtocolClient {
 
     public constructor(helper: A.IHelper) {
@@ -46,7 +52,7 @@ export class H2SClient extends AbstractHttp2Client implements A.IProtocolClient 
 
     protected _prepareOptions(opts: C.IRequestOptions): $H2.SecureClientSessionOptions {
 
-        const h2Opts: $H2.SecureClientSessionOptions = {
+        const h2Opts: ILocalSecureClientSessionOptions = {
             /**
              * Always set servername, for SNI.
              */
@@ -61,7 +67,7 @@ export class H2SClient extends AbstractHttp2Client implements A.IProtocolClient 
 
         if (opts.localAddress) {
 
-            (h2Opts as any).localAddress = opts.localAddress;
+            h2Opts.localAddress = opts.localAddress;
         }
 
         return {
@@ -72,23 +78,28 @@ export class H2SClient extends AbstractHttp2Client implements A.IProtocolClient 
 
     public getAuthorityKey(opts: C.IRequestOptions): string {
 
+        const remoteHost = opts.connectionOptions.remoteHost ??
+            opts.url.hostname;
+        const identity = [
+            `${this._.getAuthority(opts.url)}`,
+            `rh:${remoteHost}`,
+            `la:${opts.localAddress}`,
+            `tls:v${opts.minTLSVersion}`,
+            `conns:${opts.maxConnections}`,
+            `conc:${opts.concurrency}`
+        ].join('/');
+
         if (opts.ca) {
 
             const hash = $Crypto.createHash('md5');
 
-            hash.update(
-                `${this._.getAuthority(opts.url)}/la:${opts.localAddress}` +
-                `/tls_v${opts.minTLSVersion}/conns:${opts.maxConnections}` +
-                `/conc:${opts.concurrency}/ca:`
-            );
+            hash.update(`${identity}/ca:`);
 
             hash.end(opts.ca);
 
             return hash.digest('base64');
         }
 
-        return `${this._.getAuthority(opts.url)}/la:${opts.localAddress}` +
-            `/tls_v${opts.minTLSVersion}/conns:${opts.maxConnections}` +
-            `/conc:${opts.concurrency}`;
+        return identity;
     }
 }

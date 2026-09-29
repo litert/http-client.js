@@ -15,6 +15,7 @@ export default {
         ]],
         'scope-enum': [2, 'always', [
             'client',
+            'filters',
         ]],
         'scope-case': [2, 'always', {
             'cases': ['lower-case'],

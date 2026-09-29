@@ -17,7 +17,7 @@
 import * as C from './Common';
 import * as E from './Errors';
 
-type TFilterFn = (value: any, ...args: any[]) => Promise<void>;
+type TFilterFn = (value: unknown, ...args: unknown[]) => unknown;
 
 interface IFilterInfo {
 
@@ -28,13 +28,12 @@ interface IFilterInfo {
     priority: number;
 }
 
-abstract class AbstractFilterManager<TAsync extends boolean>
-implements C.IFilterManager<Record<string, C.IFilterCallback>, TAsync> {
+abstract class AbstractFilterManager {
 
-    protected readonly _filters: Record<string, IFilterInfo[]> = {};
+    protected readonly _filters = new Map<string | symbol, IFilterInfo[]>();
 
     public register(opts: {
-        name: string;
+        name: string | symbol;
         key: string | symbol;
         callback: C.IFilterCallback;
         priority?: number;
@@ -42,62 +41,75 @@ implements C.IFilterManager<Record<string, C.IFilterCallback>, TAsync> {
 
         opts.priority ??= 0;
 
-        if (!this._filters[opts.name]) {
+        let filters = this._filters.get(opts.name);
 
-            this._filters[opts.name] = [];
+        if (!filters) {
+
+            filters = [];
+            this._filters.set(opts.name, filters);
         }
 
-        if (this._filters[opts.name].find((v) => v.key === opts.key)) {
+        if (filters.find((value) => value.key === opts.key)) {
 
             throw new E.E_DUP_FILTER_FUNCTION({ metadata: { name: opts.name, key: opts.key } });
         }
 
-        this._filters[opts.name].push({
+        filters.push({
             key: opts.key,
             fn: opts.callback,
             priority: opts.priority
         });
 
-        this._filters[opts.name] = this._filters[opts.name].sort((a, b) => a.priority - b.priority);
+        filters.sort((a, b) => a.priority - b.priority);
 
         return this;
     }
 
     public unregister(
-        name: string,
-        key?: string
+        name: string | symbol,
+        key?: string | symbol
     ): this {
 
-        if (!this._filters[name]) {
+        const filters = this._filters.get(name);
+
+        if (!filters) {
 
             return this;
         }
 
         if (undefined === key) {
 
-            delete this._filters[name];
+            this._filters.delete(name);
 
             return this;
         }
 
-        const index = this._filters[name].findIndex((v) => v.key === key);
+        const index = filters.findIndex((value) => value.key === key);
 
         if (index !== -1) {
 
-            this._filters[name].splice(index, 1);
+            filters.splice(index, 1);
         }
 
         return this;
     }
 
-    public abstract filter(name: string, value: any, ...args: any[]): any;
+    public abstract filter(
+        name: string | symbol,
+        value: unknown,
+        ...args: unknown[]
+    ): unknown;
 }
 
-class AsyncFilterManager extends AbstractFilterManager<true> {
+class AsyncFilterManager extends AbstractFilterManager {
 
-    public async filter(name: string, value: any, ...args: any[]): Promise<any> {
+    public async filter(
+        name: string | symbol,
+        value: unknown,
+        ...args: unknown[]
+    ): Promise<unknown> {
 
-        const items = this._filters[name];
+        const items = this._filters.get(name);
 
         if (!items) {
 
@@ -106,21 +118,22 @@ class AsyncFilterManager extends AbstractFilterManager<true> {
 
         for (const filter of items) {
 
-            const v = filter.fn(value, ...args);
-
-            // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
-            value = v instanceof Promise ? await v : v;
+            value = await filter.fn(value, ...args);
         }
 
         return value;
     }
 }
 
-class SyncFilterManager extends AbstractFilterManager<false> {
+class SyncFilterManager extends AbstractFilterManager {
 
-    public filter(name: string, value: any, ...args: any[]): any {
+    public filter(
+        name: string | symbol,
+        value: unknown,
+        ...args: unknown[]
+    ): unknown {
 
-        const items = this._filters[name];
+        const items = this._filters.get(name);
 
         if (!items) {
 

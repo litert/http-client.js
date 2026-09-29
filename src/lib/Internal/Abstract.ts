@@ -68,4 +68,6 @@ export interface IHelper {
     buildPath(url: C.IUrl): string;
 
     getAuthority(url: C.IUrl): string;
+
+    getRequestAuthority(url: C.IUrl): string;
 }

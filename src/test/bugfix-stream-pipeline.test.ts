@@ -1,219 +1,26 @@
 /* eslint-disable */
 
 import * as NodeAssert from 'node:assert';
-import * as NodeHttp from 'node:http';
 import * as NodeHttp2 from 'node:http2';
-import { Readable, Writable } from 'node:stream';
+import { Readable } from 'node:stream';
 import * as NodeTest from 'node:test';
 import * as Http from '../lib';
-import { AbstractHttp1Client } from '../lib/Internal/AbstractHttp1Client';
-import { AbstractHttp2Client } from '../lib/Internal/AbstractHttp2Client';
-import { HttpHelper } from '../lib/Internal/Helper';
 import {
-    LOOPBACK_ADDRESS,
-    TestServer
-} from './TestServer';
-
-const REQUEST_TIMEOUT = 1_000;
-
-interface IFakeConnection {
-
-    concurrency: number;
-
-    connection: NodeHttp2.ClientHttp2Session;
-}
-
-class ObservedRequest extends Writable {
-
-    public timeoutConfigured = false;
-
-    public timeoutConfiguredAtFirstWrite: boolean | null = null;
-
-    private _responseEmitted = false;
-
-    public constructor(
-        private readonly _protocol: Http.EVersion,
-        private readonly _emitEarlyResponse: boolean
-    ) {
-
-        super();
-    }
-
-    public setTimeout(_timeout: number, _callback?: () => void): this {
-
-        this.timeoutConfigured = true;
-
-        return this;
-    }
-
-    public override _write(
-        _chunk: Buffer,
-        _encoding: BufferEncoding,
-        callback: (error?: Error | null) => void
-    ): void {
-
-        this.timeoutConfiguredAtFirstWrite ??= this.timeoutConfigured;
-
-        if (this._emitEarlyResponse && !this._responseEmitted) {
-
-            this._responseEmitted = true;
-
-            if (this._protocol === Http.EVersion.HTTP_1_1) {
-
-                const response = new Readable({
-                    read(): void {
-
-                        this.push(null);
-                    }
-                }) as NodeHttp.IncomingMessage;
-
-                response.headers = {};
-                response.statusCode = NodeHttp2.constants.HTTP_STATUS_OK;
-                response.setTimeout = (): NodeHttp.IncomingMessage => response;
-
-                this.emit('response', response);
-            }
-            else {
-
-                this.emit('response', {
-                    [NodeHttp2.constants.HTTP2_HEADER_STATUS]: NodeHttp2.constants.HTTP_STATUS_OK
-                });
-            }
-        }
-
-        callback();
-    }
-}
-
-class TestHttp1Client extends AbstractHttp1Client {
-
-    public process(
-        request: ObservedRequest,
-        opts: Http.IRequestOptions
-    ): Promise<import('../lib/Internal/Abstract').IRequestResult> {
-
-        return this._processRequest(
-            request as unknown as NodeHttp.ClientRequest,
-            opts,
-            true
-        );
-    }
-}
-
-class TestHttp2Client extends AbstractHttp2Client {
-
-    public getAuthorityKey(_opts: Http.IRequestOptions): string {
-
-        return 'test-connection';
-    }
-
-    protected _prepareOptions(
-        _opts: Http.IRequestOptions
-    ): NodeHttp2.ClientSessionOptions {
-
-        return {};
-    }
-
-    public process(
-        opts: Http.IRequestOptions
-    ): Promise<import('../lib/Internal/Abstract').IRequestResult> {
-
-        return this._processRequest(opts);
-    }
-}
-
-function createFailingBody(error: Error): Readable {
-
-    async function* generate(): AsyncGenerator<Buffer> {
-
-        yield Buffer.from('partial body');
-        throw error;
-    }
-
-    return Readable.from(generate());
-}
-
-function createInternalOptions(
-    data: Readable,
-    version: Http.EVersion
-): Http.IRequestOptions {
-
-    return {
-        'method': 'POST',
-        'url': {
-            'protocol': 'http',
-            'hostname': LOOPBACK_ADDRESS,
-            'pathname': '/',
-            'port': Http.DEFAULT_HTTP_PORT
-        },
-        'headers': {
-            [Http.Headers.CONTENT_LENGTH_H1]: 64
-        },
-        'localAddress': '',
-        'authentication': {
-            'type': 'none'
-        },
-        'minTLSVersion': Http.ETlsVersion.TLS_V1_2,
-        data,
-        version,
-        'gzip': false,
-        'deflate': false,
-        'maxConnections': 1,
-        'concurrency': 1,
-        'keepAlive': false,
-        'keepAliveTimeout': REQUEST_TIMEOUT,
-        'ca': '',
-        'requestOptions': {},
-        'connectionOptions': {},
-        'timeout': REQUEST_TIMEOUT
-    };
-}
-
-function attachHttp1ServerGuards(server: NodeHttp.Server): void {
-
-    server.on('request', (request) => {
-
-        request.on('error', () => undefined);
-        request.resume();
-    });
-
-    server.on('clientError', (_error, socket) => socket.destroy());
-}
-
-function attachHttp2ServerGuards(server: NodeHttp2.Http2Server): void {
-
-    server.on('session', (session) => session.on('error', () => undefined));
-    server.on('stream', (stream) => {
-
-        stream.on('error', () => undefined);
-        stream.resume();
-    });
-}
-
-function installFakeHttp2Connection(
-    client: TestHttp2Client,
-    request: ObservedRequest
-): IFakeConnection {
-
-    const connection = {
-        'concurrency': 1,
-        'connection': {
-            'closed': false,
-            'request': (): NodeHttp2.ClientHttp2Stream => (
-                request as unknown as NodeHttp2.ClientHttp2Stream
-            )
-        } as NodeHttp2.ClientHttp2Session
-    };
-
-    Object.defineProperty(client, '_getConnection', {
-        'value': async (): Promise<[string, IFakeConnection]> => [
-            'test-connection-id',
-            connection
-        ]
-    });
-
-    return connection;
-}
+    createFailingBody,
+    createPipelineOptions,
+    createTestHttp1Client,
+    createTestHttp2Client,
+    createUnfinishedBody,
+    installFakeHttp2Connection,
+    ObservedRequest,
+    PIPELINE_REQUEST_TIMEOUT
+} from './TestUtils/StreamPipeline';
+import { createTestClient, getResponseBody } from './TestUtils/Http';
+import {
+    sendHttp2Response,
+    startHttp1Server,
+    startHttp2Server
+} from './TestUtils/Server';
 
 NodeTest.describe('Request body stream pipeline regression', {
     'concurrency': false
@@ -221,75 +28,208 @@ NodeTest.describe('Request body stream pipeline regression', {
 
     NodeTest.it(
         'B-F-00001: [BUG] Should report an HTTP/1.1 request body stream failure',
-        async (testContext) => {
+        async () => {
 
-            const server = NodeHttp.createServer();
-            const client = Http.createHttpClient();
+            const testServer = await startHttp1Server((request) => {
+
+                request.on('error', () => undefined);
+                request.resume();
+            });
+            const client = createTestClient();
             const sourceError = new Error('HTTP/1.1 body failed');
 
-            attachHttp1ServerGuards(server);
+            try {
 
-            const testServer = await new TestServer(server).listen();
+                await NodeAssert.rejects(client.request({
+                    'method': 'POST',
+                    'url': testServer.url('http'),
+                    'headers': {
+                        [Http.Headers.CONTENT_LENGTH_H1]: 64
+                    },
+                    'data': createFailingBody(sourceError),
+                    'version': Http.EVersion.HTTP_1_1,
+                    'timeout': PIPELINE_REQUEST_TIMEOUT
+                }), (error: unknown): boolean => {
 
-            testContext.after(async () => {
+                    NodeAssert.ok(error instanceof Http.E_NETWORK_FAILED);
+                    NodeAssert.strictEqual(error.origin, sourceError);
 
-                client.close();
+                    return true;
+                });
+            }
+            finally {
+
                 await testServer.close();
-            });
-
-            await NodeAssert.rejects(client.request({
-                'method': 'POST',
-                'url': testServer.url('http'),
-                'headers': {
-                    [Http.Headers.CONTENT_LENGTH_H1]: 64
-                },
-                'data': createFailingBody(sourceError),
-                'version': Http.EVersion.HTTP_1_1,
-                'timeout': REQUEST_TIMEOUT
-            }), (error: unknown): boolean => {
-
-                NodeAssert.ok(error instanceof Http.E_NETWORK_FAILED);
-                NodeAssert.strictEqual(error.origin, sourceError);
-
-                return true;
-            });
+                client.close();
+            }
         }
     );
 
     NodeTest.it(
         'B-F-00002: [BUG] Should report an HTTP/2 request body stream failure',
-        async (testContext) => {
+        async () => {
 
-            const server = NodeHttp2.createServer();
-            const client = Http.createHttpClient();
+            const testServer = await startHttp2Server((stream) => {
+
+                stream.on('error', () => undefined);
+                stream.resume();
+            });
+            const client = createTestClient();
             const sourceError = new Error('HTTP/2 body failed');
 
-            attachHttp2ServerGuards(server);
+            try {
 
-            const testServer = await new TestServer(server).listen();
+                await NodeAssert.rejects(client.request({
+                    'method': 'POST',
+                    'url': testServer.url('http'),
+                    'headers': {
+                        [Http.Headers.CONTENT_LENGTH_H1]: 64
+                    },
+                    'data': createFailingBody(sourceError),
+                    'version': Http.EVersion.HTTP_2,
+                    'timeout': PIPELINE_REQUEST_TIMEOUT
+                }), (error: unknown): boolean => {
 
-            testContext.after(async () => {
+                    NodeAssert.ok(error instanceof Http.E_NETWORK_FAILED);
+                    NodeAssert.strictEqual(error.origin, sourceError);
 
-                client.close();
+                    return true;
+                });
+            }
+            finally {
+
                 await testServer.close();
+                client.close();
+            }
+        }
+    );
+
+    NodeTest.it(
+        'B-F-00003: [BUG] Should clean up and recover after HTTP/1.1 reset',
+        async () => {
+
+            let shouldReset = true;
+            const server = await startHttp1Server((request, response) => {
+
+                request.on('error', () => undefined);
+
+                if (shouldReset) {
+
+                    shouldReset = false;
+                    request.once('data', () => {
+
+                        request.socket.resetAndDestroy();
+                    });
+                }
+                else {
+
+                    response.end('ok');
+                }
+
+                request.resume();
             });
+            const client = createTestClient();
+            const body = createUnfinishedBody();
 
-            await NodeAssert.rejects(client.request({
-                'method': 'POST',
-                'url': testServer.url('http'),
-                'headers': {
-                    [Http.Headers.CONTENT_LENGTH_H1]: 64
-                },
-                'data': createFailingBody(sourceError),
-                'version': Http.EVersion.HTTP_2,
-                'timeout': REQUEST_TIMEOUT
-            }), (error: unknown): boolean => {
+            try {
 
-                NodeAssert.ok(error instanceof Http.E_NETWORK_FAILED);
-                NodeAssert.strictEqual(error.origin, sourceError);
+                await NodeAssert.rejects(client.request({
+                    'method': 'POST',
+                    'url': server.url('http'),
+                    'headers': {
+                        [Http.Headers.CONTENT_LENGTH_H1]: 64
+                    },
+                    'data': body,
+                    'version': Http.EVersion.HTTP_1_1,
+                    'timeout': PIPELINE_REQUEST_TIMEOUT
+                }), (error: unknown): boolean => {
 
-                return true;
+                    NodeAssert.ok(error instanceof Http.E_NETWORK_FAILED);
+                    NodeAssert.ok(error.origin instanceof Error);
+                    NodeAssert.strictEqual(
+                        (error.origin as NodeJS.ErrnoException).code,
+                        'ECONNRESET'
+                    );
+
+                    return true;
+                });
+
+                NodeAssert.strictEqual(body.destroyed, true);
+                NodeAssert.strictEqual(body.closed, true);
+
+                const probe = await client.request({
+                    'method': 'GET',
+                    'url': server.url('http'),
+                    'version': Http.EVersion.HTTP_1_1,
+                    'timeout': PIPELINE_REQUEST_TIMEOUT
+                });
+
+                NodeAssert.strictEqual(await getResponseBody(probe), 'ok');
+            }
+            finally {
+
+                await server.close();
+                client.close();
+            }
+        }
+    );
+
+    NodeTest.it(
+        'B-F-00004: [BUG] Should clean up and recover after HTTP/2 reset',
+        async () => {
+
+            let shouldReset = true;
+            const server = await startHttp2Server((stream) => {
+
+                stream.on('error', () => undefined);
+
+                if (shouldReset) {
+
+                    shouldReset = false;
+                    stream.once('data', () => stream.close(
+                        NodeHttp2.constants.NGHTTP2_INTERNAL_ERROR
+                    ));
+                }
+                else {
+
+                    sendHttp2Response(stream, 'ok');
+                }
+
+                stream.resume();
             });
+            const client = createTestClient();
+            const body = createUnfinishedBody();
+
+            try {
+
+                await NodeAssert.rejects(client.request({
+                    'method': 'POST',
+                    'url': server.url('http'),
+                    'headers': {
+                        [Http.Headers.CONTENT_LENGTH_H1]: 64
+                    },
+                    'data': body,
+                    'version': Http.EVersion.HTTP_2,
+                    'timeout': PIPELINE_REQUEST_TIMEOUT
+                }), Http.E_NETWORK_FAILED);
+
+                NodeAssert.strictEqual(body.destroyed, true);
+                NodeAssert.strictEqual(body.closed, true);
+
+                const probe = await client.request({
+                    'method': 'GET',
+                    'url': server.url('http'),
+                    'version': Http.EVersion.HTTP_2,
+                    'timeout': PIPELINE_REQUEST_TIMEOUT
+                });
+
+                NodeAssert.strictEqual(await getResponseBody(probe), 'ok');
+            }
+            finally {
+
+                await server.close();
+                client.close();
+            }
         }
     );
 
@@ -298,15 +238,13 @@ NodeTest.describe('Request body stream pipeline regression', {
         async () => {
 
             const sourceError = new Error('HTTP/1.1 body failed');
+            const body = createFailingBody(sourceError);
             const request = new ObservedRequest(Http.EVersion.HTTP_1_1, false);
-            const client = new TestHttp1Client(new HttpHelper());
+            const client = createTestHttp1Client();
 
             await NodeAssert.rejects(client.process(
                 request,
-                createInternalOptions(
-                    createFailingBody(sourceError),
-                    Http.EVersion.HTTP_1_1
-                )
+                createPipelineOptions(body, Http.EVersion.HTTP_1_1)
             ), (error: unknown): boolean => {
 
                 NodeAssert.ok(error instanceof Http.E_NETWORK_FAILED);
@@ -316,6 +254,8 @@ NodeTest.describe('Request body stream pipeline regression', {
             });
 
             NodeAssert.strictEqual(request.destroyed, true);
+            NodeAssert.strictEqual(body.destroyed, true);
+            NodeAssert.strictEqual(body.closed, true);
         }
     );
 
@@ -324,12 +264,13 @@ NodeTest.describe('Request body stream pipeline regression', {
         async () => {
 
             const sourceError = new Error('HTTP/2 body failed');
+            const body = createFailingBody(sourceError);
             const request = new ObservedRequest(Http.EVersion.HTTP_2, false);
-            const client = new TestHttp2Client(new HttpHelper());
+            const client = createTestHttp2Client();
             const connection = installFakeHttp2Connection(client, request);
 
-            await NodeAssert.rejects(client.process(createInternalOptions(
-                createFailingBody(sourceError),
+            await NodeAssert.rejects(client.process(createPipelineOptions(
+                body,
                 Http.EVersion.HTTP_2
             )), (error: unknown): boolean => {
 
@@ -340,6 +281,8 @@ NodeTest.describe('Request body stream pipeline regression', {
             });
 
             NodeAssert.strictEqual(request.destroyed, true);
+            NodeAssert.strictEqual(body.destroyed, true);
+            NodeAssert.strictEqual(body.closed, true);
             NodeAssert.strictEqual(connection.concurrency, 0);
         }
     );
@@ -349,10 +292,10 @@ NodeTest.describe('Request body stream pipeline regression', {
         async () => {
 
             const request = new ObservedRequest(Http.EVersion.HTTP_1_1, true);
-            const client = new TestHttp1Client(new HttpHelper());
+            const client = createTestHttp1Client();
             const response = await client.process(
                 request,
-                createInternalOptions(
+                createPipelineOptions(
                     Readable.from(['request body']),
                     Http.EVersion.HTTP_1_1
                 )
@@ -371,9 +314,9 @@ NodeTest.describe('Request body stream pipeline regression', {
         async () => {
 
             const request = new ObservedRequest(Http.EVersion.HTTP_2, true);
-            const client = new TestHttp2Client(new HttpHelper());
+            const client = createTestHttp2Client();
             const connection = installFakeHttp2Connection(client, request);
-            const response = await client.process(createInternalOptions(
+            const response = await client.process(createPipelineOptions(
                 Readable.from(['request body']),
                 Http.EVersion.HTTP_2
             ));
@@ -385,6 +328,54 @@ NodeTest.describe('Request body stream pipeline regression', {
             NodeAssert.strictEqual(request.timeoutConfiguredAtFirstWrite, true);
 
             request.emit('close');
+            NodeAssert.strictEqual(connection.concurrency, 0);
+        }
+    );
+
+    NodeTest.it(
+        'W-F-00003: [BUG] Should destroy HTTP/1.1 request streams on timeout',
+        async () => {
+
+            const request = new ObservedRequest(
+                Http.EVersion.HTTP_1_1,
+                false,
+                true
+            );
+            const body = createUnfinishedBody();
+            const client = createTestHttp1Client();
+
+            await NodeAssert.rejects(client.process(
+                request,
+                createPipelineOptions(body, Http.EVersion.HTTP_1_1)
+            ), Http.E_REQUEST_TIMEOUT);
+
+            NodeAssert.strictEqual(request.destroyed, true);
+            NodeAssert.strictEqual(body.destroyed, true);
+            NodeAssert.strictEqual(body.closed, true);
+        }
+    );
+
+    NodeTest.it(
+        'W-F-00004: [BUG] Should destroy HTTP/2 request streams on timeout',
+        async () => {
+
+            const request = new ObservedRequest(
+                Http.EVersion.HTTP_2,
+                false,
+                true
+            );
+            const body = createUnfinishedBody();
+            const client = createTestHttp2Client();
+            const connection = installFakeHttp2Connection(client, request);
+
+            await NodeAssert.rejects(client.process(createPipelineOptions(
+                body,
+                Http.EVersion.HTTP_2
+            )), Http.E_REQUEST_TIMEOUT);
+
+            NodeAssert.strictEqual(request.destroyed, true);
+            NodeAssert.strictEqual(body.destroyed, true);
+            NodeAssert.strictEqual(body.closed, true);
             NodeAssert.strictEqual(connection.concurrency, 0);
         }
     );

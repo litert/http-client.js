@@ -19,6 +19,11 @@ import * as $H2 from 'http2';
 import * as A from './Abstract';
 import { AbstractHttp2Client } from './AbstractHttp2Client';
 
+interface ILocalClientSessionOptions extends $H2.ClientSessionOptions {
+
+    localAddress?: string;
+}
+
 export class H2Client extends AbstractHttp2Client implements A.IProtocolClient {
 
     public constructor(helper: A.IHelper) {
@@ -33,11 +38,11 @@ export class H2Client extends AbstractHttp2Client implements A.IProtocolClient {
 
     protected _prepareOptions(opts: C.IRequestOptions): $H2.ClientSessionOptions {
 
-        const h2Opts: $H2.ClientSessionOptions = {};
+        const h2Opts: ILocalClientSessionOptions = {};
 
         if (opts.localAddress) {
 
-            (h2Opts as any).localAddress = opts.localAddress;
+            h2Opts.localAddress = opts.localAddress;
         }
 
         return {
@@ -48,7 +53,15 @@ export class H2Client extends AbstractHttp2Client implements A.IProtocolClient {
 
     public getAuthorityKey(opts: C.IRequestOptions): string {
 
-        return `${this._.getAuthority(opts.url)}/la:${opts.localAddress}` +
-            `/conns:${opts.maxConnections}/conc:${opts.concurrency}`;
+        const remoteHost = opts.connectionOptions.remoteHost ??
+            opts.url.hostname;
+
+        return [
+            `${this._.getAuthority(opts.url)}`,
+            `rh:${remoteHost}`,
+            `la:${opts.localAddress}`,
+            `conns:${opts.maxConnections}`,
+            `conc:${opts.concurrency}`
+        ].join('/');
     }
 }

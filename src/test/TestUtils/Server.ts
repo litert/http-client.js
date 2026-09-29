@@ -17,10 +17,10 @@
 import * as NodeAssert from 'node:assert';
 import * as NodeEvents from 'node:events';
 import * as NodeFs from 'node:fs';
-import type * as NodeHttp from 'node:http';
-import type * as NodeHttp2 from 'node:http2';
-import type * as NodeHttps from 'node:https';
-import type * as NodeNet from 'node:net';
+import * as NodeHttp from 'node:http';
+import * as NodeHttp2 from 'node:http2';
+import * as NodeHttps from 'node:https';
+import * as NodeNet from 'node:net';
 import * as NodePath from 'node:path';
 
 export const LOOPBACK_ADDRESS = '127.0.0.1';
@@ -45,6 +45,18 @@ export type ITestServer =
     NodeHttps.Server |
     NodeHttp2.Http2Server |
     NodeHttp2.Http2SecureServer;
+
+export type IHttp2RequestHandler = (
+    request: NodeHttp2.Http2ServerRequest,
+    response: NodeHttp2.Http2ServerResponse
+) => void;
+
+export type IHttp2StreamHandler = (
+    stream: NodeHttp2.ServerHttp2Stream,
+    headers: NodeHttp2.IncomingHttpHeaders
+) => void;
+
+export type ITcpConnectionHandler = (socket: NodeNet.Socket) => void;
 
 export interface IResourceTracker<T> {
 
@@ -123,19 +135,22 @@ export class TestServer<TServer extends ITestServer> {
         return this._port;
     }
 
-    public async listen(port: number = 0): Promise<this> {
+    public async listen(
+        port: number = 0,
+        address: string = LOOPBACK_ADDRESS
+    ): Promise<this> {
 
         const listening = NodeEvents.once(this.server, 'listening', {
             'signal': AbortSignal.timeout(TEST_TIMEOUT)
         });
 
-        this.server.listen(port, LOOPBACK_ADDRESS);
+        this.server.listen(port, address);
         await listening;
 
-        const address = this.server.address();
+        const boundAddress = this.server.address();
 
-        NodeAssert.ok(address && typeof address !== 'string');
-        this._port = address.port;
+        NodeAssert.ok(boundAddress && typeof boundAddress !== 'string');
+        this._port = boundAddress.port;
 
         return this;
     }
@@ -168,4 +183,118 @@ export class TestServer<TServer extends ITestServer> {
         this.server.close();
         await closed;
     }
+}
+
+export async function startTcpServer(
+    handler?: ITcpConnectionHandler
+): Promise<TestServer<NodeNet.Server>> {
+
+    return new TestServer(NodeNet.createServer(handler)).listen();
+}
+
+export async function startHttp1Server(
+    handler?: NodeHttp.RequestListener
+): Promise<TestServer<NodeHttp.Server>> {
+
+    const server = NodeHttp.createServer(handler);
+
+    server.on('clientError', (_error, socket) => socket.destroy());
+
+    return new TestServer(server).listen();
+}
+
+export async function startHttps1Server(
+    options: NodeHttps.ServerOptions,
+    handler?: NodeHttp.RequestListener
+): Promise<TestServer<NodeHttps.Server>> {
+
+    const server = NodeHttps.createServer(options, handler);
+
+    server.on('clientError', (_error, socket) => socket.destroy());
+
+    return new TestServer(server).listen();
+}
+
+export async function startHttp2Server(
+    handler?: IHttp2StreamHandler,
+    port: number = 0,
+    address: string = LOOPBACK_ADDRESS
+): Promise<TestServer<NodeHttp2.Http2Server>> {
+
+    const server = NodeHttp2.createServer();
+
+    server.on('session', (session) => {
+
+        session.on('error', () => undefined);
+    });
+
+    if (handler) {
+
+        server.on('stream', handler);
+    }
+
+    return new TestServer(server).listen(port, address);
+}
+
+export async function startHttp2CompatibilityServer(
+    handler: IHttp2RequestHandler
+): Promise<TestServer<NodeHttp2.Http2Server>> {
+
+    const server = NodeHttp2.createServer(handler);
+
+    server.on('session', (session) => {
+
+        session.on('error', () => undefined);
+    });
+
+    return new TestServer(server).listen();
+}
+
+export async function startSecureHttp2Server(
+    options: NodeHttp2.SecureServerOptions,
+    handler?: IHttp2StreamHandler
+): Promise<TestServer<NodeHttp2.Http2SecureServer>> {
+
+    const server = NodeHttp2.createSecureServer(options);
+
+    server.on('session', (session) => {
+
+        session.on('error', () => undefined);
+    });
+
+    if (handler) {
+
+        server.on('stream', handler);
+    }
+
+    return new TestServer(server).listen();
+}
+
+export async function startSecureHttp2CompatibilityServer(
+    options: NodeHttp2.SecureServerOptions,
+    handler: IHttp2RequestHandler
+): Promise<TestServer<NodeHttp2.Http2SecureServer>> {
+
+    const server = NodeHttp2.createSecureServer(options, handler);
+
+    server.on('session', (session) => {
+
+        session.on('error', () => undefined);
+    });
+
+    return new TestServer(server).listen();
+}
+
+export function sendHttp2Response(
+    stream: NodeHttp2.ServerHttp2Stream,
+    body: string
+): void {
+
+    stream.respond({
+        [NodeHttp2.constants.HTTP2_HEADER_STATUS]:
+            NodeHttp2.constants.HTTP_STATUS_OK,
+        [NodeHttp2.constants.HTTP2_HEADER_CONTENT_LENGTH]:
+            Buffer.byteLength(body)
+    });
+    stream.end(body);
 }

@@ -44,7 +44,7 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
 
     protected _getAgent(
         opts: C.IRequestOptions,
-        key: string = this._getAuthroityKey(opts)
+        key: string = this.getAuthorityKey(opts)
     ): $H1S.Agent {
 
         if (this._agents[key]) {
@@ -53,7 +53,7 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
         }
 
         return this._agents[key] = new $H1S.Agent({
-            'maxSockets': opts.maxConnections,
+            'maxSockets': this._getConnectionLimit(opts),
             'keepAlive': opts.keepAlive,
             'keepAliveMsecs': opts.keepAliveTimeout,
             ...opts.connectionOptions
@@ -66,25 +66,17 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
         key?: string
     ): Promise<A.IRequestResult> {
 
-        if (opts.concurrency !== Infinity) {
-
-            /**
-             * Overwrite maxConnections when concurrency is set.
-             */
-            opts.maxConnections = opts.concurrency;
-        }
-
         const agent = this._getAgent(opts, key);
 
         const REQ_ENTITY = this._.requireEntity(opts.method);
 
         if (opts.connectionOptions.remoteHost) {
 
-            opts.connectionOptions.severname = opts.url.hostname;
+            opts.connectionOptions.servername = opts.url.hostname;
         }
 
         if (!opts.headers['host']) {
-            opts.headers['host'] = opts.url.hostname;
+            opts.headers['host'] = this._.getRequestAuthority(opts.url);
         }
 
         const h1sOpts: $H1S.RequestOptions = {
@@ -95,7 +87,7 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
             'headers': opts.headers,
             'agent': agent,
             'servername': opts.url.hostname,
-            'minVersion': `TLSv${opts.minTLSVersion}` as any
+            'minVersion': `TLSv${opts.minTLSVersion}` as $TLS.SecureVersion
         };
 
         if (opts.timeout) {
@@ -149,24 +141,39 @@ export class H1SClient extends AbstractHttp1Client implements A.IProtocolClient 
         );
     }
 
-    protected _getAuthroityKey(opts: C.IRequestOptions): string {
-
-        return `${this._.getAuthority(opts.url)}/connections/${opts.maxConnections}`;
-    }
-
     public getAuthorityKey(opts: C.IRequestOptions): string {
+
+        const remoteHost = opts.connectionOptions.remoteHost ??
+            opts.url.hostname;
+        const identity = [
+            `${this._.getAuthority(opts.url)}`,
+            `rh:${remoteHost}`,
+            `tls_v${opts.minTLSVersion}`,
+            `la:${opts.localAddress}`,
+            `conns:${this._getConnectionLimit(opts)}`,
+            `ka:${opts.keepAlive}`,
+            `kat:${opts.keepAliveTimeout}`
+        ].join('/');
 
         if (opts.ca) {
 
             const hasher = $Crypto.createHash('md5');
 
-            hasher.update(`${this._.getAuthority(opts.url)}/tls_v${opts.minTLSVersion}/la:${opts.localAddress}/conns:${opts.maxConnections}/ca:`);
+            hasher.update(`${identity}/ca:`);
 
             hasher.end(opts.ca);
 
             return hasher.digest('base64');
         }
 
-        return `${this._.getAuthority(opts.url)}/rh:${opts.connectionOptions.remoteHost ?? opts.url.hostname}/tls_v${opts.minTLSVersion}/la:${opts.localAddress}/conns:${opts.maxConnections}`;
+        return identity;
+    }
+
+    private _getConnectionLimit(opts: C.IRequestOptions): number {
+
+        const limit = opts.concurrency === Infinity ? opts.maxConnections :
+            opts.concurrency;
+
+        return limit > 0 ? limit : 1;
     }
 }

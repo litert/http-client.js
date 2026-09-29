@@ -90,7 +90,8 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
     protected async _getConnection(
         opts: C.IRequestOptions,
         h2Opts: $H2.ClientSessionOptions | $H2.SecureClientSessionOptions,
-        key: string
+        key: string,
+        authority: string
     ): Promise<[string, Pool.IConnection]> {
 
         const signal = this._getAbortSignal(opts);
@@ -132,6 +133,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
             if (pool.quantity + pool.pending < pool.maximum) {
 
                 return this._createConnection({
+                    authority,
                     'clientOptions': opts,
                     'connectionOptions': h2Opts,
                     key,
@@ -153,7 +155,7 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
         return new Promise((resolve, reject) => {
 
             const session = $H2.connect(
-                this._.getAuthority(opts.clientOptions.url),
+                opts.authority,
                 opts.connectionOptions
             );
             let completed = false;
@@ -368,18 +370,25 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
             [$H2.constants.HTTP2_HEADER_PATH]: this._.buildPath(opts.url)
         };
 
-        headers[$H2.constants.HTTP2_HEADER_AUTHORITY] ??= opts.url.hostname;
+        headers[$H2.constants.HTTP2_HEADER_AUTHORITY] =
+            this._.getRequestAuthority(opts.url);
+
+        let connectionUrl = opts.url;
 
         if (opts.connectionOptions.remoteHost) {
 
             opts.connectionOptions.servername = opts.url.hostname;
-            opts.url.hostname = opts.connectionOptions.remoteHost;
+            connectionUrl = {
+                ...opts.url,
+                'hostname': opts.connectionOptions.remoteHost
+            };
         }
 
         const [connId, conn] = await this._getConnection(
             opts,
             this._prepareOptions(opts),
-            key
+            key,
+            this._.getAuthority(connectionUrl)
         );
 
         let connectionReleased = false;
@@ -429,7 +438,9 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
 
             if (opts.timeout) {
 
-                req.setTimeout(opts.timeout);
+                req.setTimeout(opts.timeout, () => req.destroy(
+                    new E.E_REQUEST_TIMEOUT({ 'phase': 'request' })
+                ));
             }
 
             if (REQ_ENTITY) {
@@ -445,6 +456,11 @@ export abstract class AbstractHttp2Client extends AbstractProtocolClient {
                         if (signal && this._isAbortError(opts, e)) {
 
                             throw this._createAbortError(signal, e);
+                        }
+
+                        if (e instanceof E.E_REQUEST_TIMEOUT) {
+
+                            throw e;
                         }
 
                         throw new E.E_NETWORK_FAILED({}, e);

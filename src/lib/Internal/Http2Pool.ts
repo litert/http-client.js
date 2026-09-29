@@ -51,6 +51,8 @@ export interface ISiteConnectionPool {
  */
 export interface IConnectionCreationOptions {
 
+    authority: string;
+
     clientOptions: C.IRequestOptions;
 
     connectionOptions: $H2.ClientSessionOptions | $H2.SecureClientSessionOptions;

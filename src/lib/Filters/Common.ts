@@ -16,7 +16,9 @@
 
 export type IFilterCallback = (value: any, ...args: any[]) => any;
 
-export type IAsyncFilterCallback<T extends IFilterCallback> = (...args: Parameters<T>) => Promise<ReturnType<T>>;
+export type IAsyncFilterCallback<T extends IFilterCallback> = (
+    ...args: Parameters<T>
+) => PromiseLike<Awaited<ReturnType<T>>> | Awaited<ReturnType<T>>;
 
 export type IDefaultFilterTemplate = Record<string, IFilterCallback>;
 
@@ -43,7 +45,9 @@ export interface IFilterManager<
         /**
          * The filter function.
          */
-        callback: T[TK] extends IFilterCallback ? T[TK] : never;
+        callback: T[TK] extends IFilterCallback ?
+            TAsync extends true ? IAsyncFilterCallback<T[TK]> : T[TK] :
+            never;
 
         /**
          * The priority of filter function (the lower would be executed earlier). [Default: 0]
@@ -56,7 +60,8 @@ export interface IFilterManager<
      * Unregister an existing filter function from a specific filter.
      *
      * @param name      The name of filter.
-     * @param key       The key of filter function. If omitted, all filter functions of the filter would be unregistered.
+     * @param key The key of filter function. If omitted, every callback for
+     * the filter is unregistered.
      */
     unregister(name: string | symbol, key?: string | symbol): this;
 
@@ -70,5 +75,6 @@ export interface IFilterManager<
     filter<TK extends keyof T>(
         name: TK,
         ...args: T[TK] extends IFilterCallback ? Parameters<T[TK]> : never
-    ): T[TK] extends IFilterCallback ? TAsync extends true ? Promise<ReturnType<T[TK]>> : ReturnType<T[TK]> : never;
+    ): T[TK] extends IFilterCallback ? TAsync extends true ?
+        Promise<Awaited<ReturnType<T[TK]>>> : ReturnType<T[TK]> : never;
 }

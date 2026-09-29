@@ -47,10 +47,13 @@ export function createResponsePromise(
     return new Promise((resolve, reject) => {
 
         let responded = false;
+        let onClose: () => void;
+        let onError: (error: Error) => void;
 
-        opts.request.on('response', (headers) => {
+        const onResponse = (headers: $H2.IncomingHttpHeaders): void => {
 
             responded = true;
+            opts.request.removeListener('error', onError);
             resolve({
                 'protocol': opts.clientOptions.url.protocol === 'https' ?
                     C.EProtocol.HTTPS_2 : C.EProtocol.HTTP_2,
@@ -63,16 +66,15 @@ export function createResponsePromise(
                     Infinity : parseInt(headers['content-length']),
                 'noEntity': !opts.helper.hasEntity(opts.clientOptions.method)
             });
+        };
+        onError = (error: Error): void => {
 
-        }).once('error', (error) => {
-
-            opts.request.removeAllListeners('error');
-            opts.request.removeAllListeners('response');
-            opts.request.removeAllListeners('close');
+            opts.request.removeListener('response', onResponse);
+            opts.request.removeListener('close', onClose);
             opts.releaseConnection();
             reject(error);
-
-        }).on('close', () => {
+        };
+        onClose = (): void => {
 
             opts.releaseConnection();
 
@@ -82,6 +84,10 @@ export function createResponsePromise(
                     'reason': STREAM_CLOSED_BEFORE_RESPONSE
                 }));
             }
-        });
+        };
+
+        opts.request.once('response', onResponse);
+        opts.request.once('error', onError);
+        opts.request.on('close', onClose);
     });
 }
